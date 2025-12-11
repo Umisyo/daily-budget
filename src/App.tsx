@@ -1,34 +1,71 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { LoginForm } from './components/auth/LoginForm'
+import { SignUpForm } from './components/auth/SignUpForm'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs'
+import { Button } from './components/ui/button'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+function AppContent() {
+  const { user, loading, signOut } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-muted-foreground">読み込み中...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <div className="w-full max-w-md">
+          <Tabs defaultValue="login" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger className='data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-background' value="login">ログイン</TabsTrigger>
+              <TabsTrigger className='data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-background' value="signup">新規登録</TabsTrigger>
+            </TabsList>
+            <TabsContent value="login" className="mt-4">
+              <LoginForm />
+            </TabsContent>
+            <TabsContent value="signup" className="mt-4">
+              <SignUpForm />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="min-h-screen p-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Daily Budget</h1>
+          <Button onClick={signOut}>
+            ログアウト
+          </Button>
+        </div>
+        <div className="space-y-4">
+          <div className="p-6 border rounded-lg">
+            <h2 className="text-xl font-semibold mb-2">ようこそ！</h2>
+            <p className="text-muted-foreground">
+              ログインに成功しました。メールアドレス: {user.email}
+            </p>
+          </div>
+        </div>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    </div>
+  )
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   )
 }
 

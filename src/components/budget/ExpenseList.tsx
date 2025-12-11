@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
+import { CrossIcon } from '../ui/icons/akar-icons-cross'
 import { ExpenseForm } from './ExpenseForm'
 import type { Tables } from '../../types/supabase'
 
@@ -48,14 +49,14 @@ export function ExpenseList({
             {(showAllExpenses ? expenses : expenses.slice(0, 10)).map((expense) => (
               <div
                 key={expense.id}
-                className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                className="flex items-center justify-between gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
               >
-                <div className="flex-1">
-                  <div className="flex items-center gap-4">
+                <div className="flex-1 text-left">
+                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
                     <p className="font-semibold">
                       ¥{Number(expense.amount).toLocaleString()}
                     </p>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="flex flex-col gap-1 md:flex-row md:items-center md:gap-2 text-sm text-muted-foreground">
                       {expense.date && (
                         <p>
                           {new Date(expense.date).toLocaleDateString('ja-JP', {
@@ -71,11 +72,11 @@ export function ExpenseList({
                 </div>
                 {expense.id && (
                   <Button
-                    variant="destructive"
-                    size="sm"
+                    size="icon"
                     onClick={() => handleDelete(expense.id!)}
+                    className="rounded-full flex-shrink-0"
                   >
-                    削除
+                    <CrossIcon />
                   </Button>
                 )}
               </div>

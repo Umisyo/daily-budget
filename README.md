@@ -79,6 +79,7 @@ daily-budget/
 │   ├── components/        # Reactコンポーネント
 │   │   ├── auth/          # 認証関連コンポーネント
 │   │   └── ui/            # UIコンポーネント
+|   ├── pages              # Pageコンポーネント
 │   ├── contexts/          # React Context
 │   ├── lib/               # ユーティリティ関数
 │   ├── types/             # TypeScript型定義

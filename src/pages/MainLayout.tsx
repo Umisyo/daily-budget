@@ -7,7 +7,7 @@ export function MainLayout() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto p-4">
+      <div className="max-w-4xl mx-auto px-0 py-4 md:px-4">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Daily Budget</h1>
           <Button onClick={signOut}>

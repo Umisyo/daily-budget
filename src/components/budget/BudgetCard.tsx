@@ -75,10 +75,10 @@ export function BudgetCard({
           </div>
           <div className="flex gap-2 self-center sm:self-auto">
             {onEditSettings && !isEditing && (
-              <Button onClick={onEditSettings}>期間設定</Button>
+              <Button onClick={onEditSettings}>期間</Button>
             )}
             {budget !== null && !isEditing && (
-              <Button onClick={handleEditClick}>編集</Button>
+              <Button onClick={handleEditClick}>予算</Button>
             )}
           </div>
         </div>

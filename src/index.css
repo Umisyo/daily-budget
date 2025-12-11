@@ -179,3 +179,12 @@ button:focus-visible {
     @apply bg-background text-foreground;
   }
 }
+
+/* タブのダークモード対応 */
+.dark [data-slot="tabs-trigger"] {
+  color: white !important;
+}
+
+.dark [data-slot="tabs-trigger"][data-state="active"] {
+  color: white !important;
+}

@@ -128,6 +128,39 @@ export type Database = {
         }
         Relationships: []
       }
+      incomes: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          description: string | null
+          encrypted_description: string | null
+          hashed_user_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          date: string
+          description?: string | null
+          encrypted_description?: string | null
+          hashed_user_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          description?: string | null
+          encrypted_description?: string | null
+          hashed_user_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

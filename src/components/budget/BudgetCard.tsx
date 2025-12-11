@@ -8,6 +8,7 @@ import { formatBudgetPeriod, getRemainingDays } from '../../utils/budgetPeriod'
 interface BudgetCardProps {
   budget: number | null
   totalExpenses: number
+  totalIncomes: number
   startDay: number
   isEditing: boolean
   onEdit: () => void
@@ -20,6 +21,7 @@ interface BudgetCardProps {
 export function BudgetCard({
   budget,
   totalExpenses,
+  totalIncomes,
   startDay,
   isEditing,
   onEdit,
@@ -58,8 +60,11 @@ export function BudgetCard({
   }
 
   const now = new Date()
-  const remainingBudget = budget !== null ? budget - totalExpenses : null
-  const budgetPercentage = budget !== null && budget > 0 ? (totalExpenses / budget) * 100 : 0
+  // 残り予算 = 予算 + 収入合計 - 支出合計
+  const remainingBudget = budget !== null ? budget + totalIncomes - totalExpenses : null
+  // 使用率の計算: 支出 / (予算 + 収入)
+  const availableBudget = budget !== null ? budget + totalIncomes : 0
+  const budgetPercentage = availableBudget > 0 ? (totalExpenses / availableBudget) * 100 : 0
   const remainingDays = getRemainingDays(startDay, now)
   const dailyBudget = remainingBudget !== null && remainingDays > 0 ? remainingBudget / remainingDays : null
 
@@ -143,14 +148,18 @@ export function BudgetCard({
                   </p>
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-4 pt-4">
+              <div className="grid grid-cols-3 gap-4 pt-4">
                 <div className="p-4 bg-muted rounded-lg">
                   <p className="text-sm text-muted-foreground mb-1">設定予算</p>
                   <p className="text-2xl font-semibold">¥{budget.toLocaleString()}</p>
                 </div>
                 <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-1">消費金額</p>
-                  <p className="text-2xl font-semibold">¥{totalExpenses.toLocaleString()}</p>
+                  <p className="text-sm text-muted-foreground mb-1">収入合計</p>
+                  <p className="text-2xl font-semibold text-green-600">¥{totalIncomes.toLocaleString()}</p>
+                </div>
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-1">支出合計</p>
+                  <p className="text-2xl font-semibold text-destructive">¥{totalExpenses.toLocaleString()}</p>
                 </div>
               </div>
               <div className="pt-4">

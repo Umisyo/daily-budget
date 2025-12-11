@@ -3,9 +3,12 @@ import { useAuth } from '../contexts/AuthContext'
 import { useBudgetData } from '../hooks/useBudgetData'
 import { useBudgetSettings } from '../hooks/useBudgetSettings'
 import { useExpenses } from '../hooks/useExpenses'
+import { useIncomes } from '../hooks/useIncomes'
 import { BudgetCard } from '../components/budget/BudgetCard'
 import { BudgetSettingsForm } from '../components/budget/BudgetSettingsForm'
 import { ExpenseList } from '../components/budget/ExpenseList'
+import { IncomeList } from '../components/budget/IncomeList'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
 
 export function BudgetPage() {
   const { user } = useAuth()
@@ -14,6 +17,7 @@ export function BudgetPage() {
   const [isEditingSettings, setIsEditingSettings] = useState(false)
   const [isSubmittingSettings, setIsSubmittingSettings] = useState(false)
   const [isSubmittingExpense, setIsSubmittingExpense] = useState(false)
+  const [isSubmittingIncome, setIsSubmittingIncome] = useState(false)
 
   // カスタムフックを使用
   const { startDay, isLoading: settingsLoading, updateStartDay } = useBudgetSettings(user?.id ?? null)
@@ -22,8 +26,12 @@ export function BudgetPage() {
     user?.id ?? null,
     startDay
   )
+  const { incomes, totalIncomes, isLoading: incomesLoading, addIncome, updateIncome, deleteIncome } = useIncomes(
+    user?.id ?? null,
+    startDay
+  )
 
-  const dataLoading = settingsLoading || budgetLoading || expensesLoading
+  const dataLoading = settingsLoading || budgetLoading || expensesLoading || incomesLoading
 
   const handleSubmitBudget = async (amount: number) => {
     setIsSubmitting(true)
@@ -86,6 +94,39 @@ export function BudgetPage() {
     }
   }
 
+  const handleSubmitIncome = async (amount: number, date: string, description?: string) => {
+    setIsSubmittingIncome(true)
+    try {
+      await addIncome(amount, date, description)
+    } catch (error) {
+      alert('収入の登録に失敗しました')
+      throw error
+    } finally {
+      setIsSubmittingIncome(false)
+    }
+  }
+
+  const handleUpdateIncome = async (id: string, amount: number, date: string, description?: string) => {
+    setIsSubmittingIncome(true)
+    try {
+      await updateIncome(id, amount, date, description)
+    } catch (error) {
+      alert('収入の更新に失敗しました')
+      throw error
+    } finally {
+      setIsSubmittingIncome(false)
+    }
+  }
+
+  const handleDeleteIncome = async (id: string) => {
+    try {
+      await deleteIncome(id)
+    } catch (error) {
+      alert('収入の削除に失敗しました')
+      throw error
+    }
+  }
+
   if (dataLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -110,6 +151,7 @@ export function BudgetPage() {
           <BudgetCard
             budget={budget}
             totalExpenses={totalExpenses}
+            totalIncomes={totalIncomes}
             startDay={startDay}
             isEditing={isEditing}
             onEdit={() => setIsEditing(true)}
@@ -119,15 +161,36 @@ export function BudgetPage() {
             onEditSettings={() => setIsEditingSettings(true)}
           />
 
-          {/* 支出リスト */}
+          {/* 収入・支出リスト（タブで切り替え） */}
           {budget !== null && !isEditing && (
-            <ExpenseList
-              expenses={expenses}
-              onDelete={handleDeleteExpense}
-              onSubmitExpense={handleSubmitExpense}
-              onUpdateExpense={handleUpdateExpense}
-              isSubmittingExpense={isSubmittingExpense}
-            />
+            <Tabs defaultValue="expenses" className="w-full">
+              <TabsList>
+                <TabsTrigger value="expenses" className='data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-muted text-muted-foreground'>
+                  支出
+                </TabsTrigger>
+                <TabsTrigger value="incomes" className='data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-muted text-muted-foreground'>
+                  収入
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="expenses">
+                <ExpenseList
+                  expenses={expenses}
+                  onDelete={handleDeleteExpense}
+                  onSubmitExpense={handleSubmitExpense}
+                  onUpdateExpense={handleUpdateExpense}
+                  isSubmittingExpense={isSubmittingExpense}
+                />
+              </TabsContent>
+              <TabsContent value="incomes">
+                <IncomeList
+                  incomes={incomes}
+                  onDelete={handleDeleteIncome}
+                  onSubmitIncome={handleSubmitIncome}
+                  onUpdateIncome={handleUpdateIncome}
+                  isSubmittingIncome={isSubmittingIncome}
+                />
+              </TabsContent>
+            </Tabs>
           )}
         </>
       )}

@@ -6,11 +6,15 @@ import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { calculateBudgetPeriod, formatBudgetPeriod } from '../utils/budgetPeriod'
+import type { Tables } from '../types/supabase'
+
+type Expense = Tables<'expenses'>
 
 export function BudgetPage() {
   const { user } = useAuth()
   const [budget, setBudget] = useState<number | null>(null)
   const [totalExpenses, setTotalExpenses] = useState<number>(0)
+  const [expenses, setExpenses] = useState<Expense[]>([])
   const [dataLoading, setDataLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [budgetAmount, setBudgetAmount] = useState<string>('')
@@ -19,6 +23,11 @@ export function BudgetPage() {
   const [isEditingSettings, setIsEditingSettings] = useState(false)
   const [settingsStartDay, setSettingsStartDay] = useState<string>('1')
   const [isSubmittingSettings, setIsSubmittingSettings] = useState(false)
+  const [showAllExpenses, setShowAllExpenses] = useState(false)
+  const [expenseAmount, setExpenseAmount] = useState<string>('')
+  const [expenseDate, setExpenseDate] = useState<string>('')
+  const [expenseDescription, setExpenseDescription] = useState<string>('')
+  const [isSubmittingExpense, setIsSubmittingExpense] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -61,20 +70,23 @@ export function BudgetPage() {
           setBudget(Number(budgetData.amount))
         }
 
-        // 予算期間内の支出合計を取得
+        // 予算期間内の支出を取得
         const periodStartStr = period.start.toISOString().split('T')[0]
         const periodEndStr = period.end.toISOString().split('T')[0]
 
         const { data: expensesData, error: expensesError } = await supabase
           .from('expenses')
-          .select('amount')
+          .select('*')
           .eq('user_id', user.id)
           .gte('date', periodStartStr)
           .lte('date', periodEndStr)
+          .order('date', { ascending: false })
+          .order('created_at', { ascending: false })
 
         if (expensesError) {
           console.error('支出取得エラー:', expensesError)
         } else if (expensesData) {
+          setExpenses(expensesData)
           const total = expensesData.reduce((sum, expense) => sum + Number(expense.amount), 0)
           setTotalExpenses(total)
         }
@@ -86,6 +98,10 @@ export function BudgetPage() {
     }
 
     fetchBudgetData()
+
+    // 日付フィールドの初期値を今日の日付に設定
+    const today = new Date().toISOString().split('T')[0]
+    setExpenseDate(today)
   }, [user])
 
   const handleSubmitBudget = async (e: React.FormEvent) => {
@@ -216,6 +232,110 @@ export function BudgetPage() {
   const handleCancelEdit = () => {
     setIsEditing(false)
     setBudgetAmount('')
+  }
+
+  const handleSubmitExpense = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user) return
+
+    const amount = parseFloat(expenseAmount)
+    if (isNaN(amount) || amount < 0) {
+      alert('有効な金額を入力してください')
+      return
+    }
+
+    if (!expenseDate) {
+      alert('日付を入力してください')
+      return
+    }
+
+    setIsSubmittingExpense(true)
+    try {
+      const { error } = await supabase
+        .from('expenses')
+        .insert({
+          user_id: user.id,
+          amount,
+          date: expenseDate,
+          description: expenseDescription || null,
+        })
+
+      if (error) throw error
+
+      // データを再取得
+      const now = new Date()
+      const period = calculateBudgetPeriod(startDay, now)
+      const periodStartStr = period.start.toISOString().split('T')[0]
+      const periodEndStr = period.end.toISOString().split('T')[0]
+
+      const { data: expensesData, error: fetchError } = await supabase
+        .from('expenses')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('date', periodStartStr)
+        .lte('date', periodEndStr)
+        .order('date', { ascending: false })
+        .order('created_at', { ascending: false })
+
+      if (fetchError) throw fetchError
+
+      if (expensesData) {
+        setExpenses(expensesData)
+        const total = expensesData.reduce((sum, expense) => sum + Number(expense.amount), 0)
+        setTotalExpenses(total)
+      }
+
+      // フォームをリセット
+      setExpenseAmount('')
+      setExpenseDescription('')
+      const today = new Date().toISOString().split('T')[0]
+      setExpenseDate(today)
+    } catch (error) {
+      console.error('支出登録エラー:', error)
+      alert('支出の登録に失敗しました')
+    } finally {
+      setIsSubmittingExpense(false)
+    }
+  }
+
+  const handleDeleteExpense = async (id: string) => {
+    if (!confirm('この支出を削除しますか？')) return
+    if (!user) return
+
+    try {
+      const { error } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+
+      // データを再取得
+      const now = new Date()
+      const period = calculateBudgetPeriod(startDay, now)
+      const periodStartStr = period.start.toISOString().split('T')[0]
+      const periodEndStr = period.end.toISOString().split('T')[0]
+
+      const { data: expensesData, error: fetchError } = await supabase
+        .from('expenses')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('date', periodStartStr)
+        .lte('date', periodEndStr)
+        .order('date', { ascending: false })
+        .order('created_at', { ascending: false })
+
+      if (fetchError) throw fetchError
+
+      if (expensesData) {
+        setExpenses(expensesData)
+        const total = expensesData.reduce((sum, expense) => sum + Number(expense.amount), 0)
+        setTotalExpenses(total)
+      }
+    } catch (error) {
+      console.error('支出削除エラー:', error)
+      alert('支出の削除に失敗しました')
+    }
   }
 
   if (dataLoading) {
@@ -369,6 +489,109 @@ export function BudgetPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* 支出リスト */}
+          {budget !== null && !isEditing && !isEditingSettings && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl">支出リスト</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* 支出登録フォーム */}
+                <form onSubmit={handleSubmitExpense} className="space-y-4 mb-6 pb-6 border-b">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="expense-amount">金額（円）</Label>
+                      <Input
+                        id="expense-amount"
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder="例: 1500"
+                        value={expenseAmount}
+                        onChange={(e) => setExpenseAmount(e.target.value)}
+                        required
+                        disabled={isSubmittingExpense}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="expense-date">日付</Label>
+                      <Input
+                        id="expense-date"
+                        type="date"
+                        value={expenseDate}
+                        onChange={(e) => setExpenseDate(e.target.value)}
+                        required
+                        disabled={isSubmittingExpense}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="expense-description">説明（任意）</Label>
+                      <Input
+                        id="expense-description"
+                        type="text"
+                        placeholder="例: 昼食代"
+                        value={expenseDescription}
+                        onChange={(e) => setExpenseDescription(e.target.value)}
+                        disabled={isSubmittingExpense}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button type="submit" disabled={isSubmittingExpense}>
+                      {isSubmittingExpense ? '登録中...' : '登録'}
+                    </Button>
+                  </div>
+                </form>
+
+                {expenses.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">支出が登録されていません</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                  {(showAllExpenses ? expenses : expenses.slice(0, 10)).map((expense) => (
+                    <div
+                      key={expense.id}
+                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-4">
+                          <p className="font-semibold">
+                            ¥{Number(expense.amount).toLocaleString()}
+                          </p>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <p>{new Date(expense.date).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                            {expense.description && (
+                              <p>{expense.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteExpense(expense.id)}
+                      >
+                        削除
+                      </Button>
+                    </div>
+                  ))}
+                  </div>
+                )}
+                {expenses.length > 10 && (
+                  <div className="mt-4 text-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowAllExpenses(!showAllExpenses)}
+                    >
+                      {showAllExpenses ? '折りたたむ' : `残り${expenses.length - 10}件を表示`}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
     </div>
   )
 }

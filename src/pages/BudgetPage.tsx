@@ -6,8 +6,10 @@ import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { calculateBudgetPeriod, formatBudgetPeriod } from '../utils/budgetPeriod'
+import { hashUserId } from '../utils/hashUserId'
 import type { Tables } from '../types/supabase'
 
+// expensesテーブルから取得するExpense型
 type Expense = Tables<'expenses'>
 
 export function BudgetPage() {
@@ -35,10 +37,11 @@ export function BudgetPage() {
     const fetchBudgetData = async () => {
       try {
         // 予算期間設定を取得
+        const hashedUserId = await hashUserId(user.id)
         const { data: settingsData, error: settingsError } = await supabase
           .from('budget_settings')
           .select('start_day')
-          .eq('user_id', user.id)
+          .eq('hashed_user_id', hashedUserId)
           .single()
 
         let currentStartDay = 1
@@ -59,7 +62,7 @@ export function BudgetPage() {
         const { data: budgetData, error: budgetError } = await supabase
           .from('budgets')
           .select('amount')
-          .eq('user_id', user.id)
+          .eq('hashed_user_id', hashedUserId)
           .eq('year', period.startYear)
           .eq('month', period.startMonth)
           .single()
@@ -74,10 +77,11 @@ export function BudgetPage() {
         const periodStartStr = period.start.toISOString().split('T')[0]
         const periodEndStr = period.end.toISOString().split('T')[0]
 
+        // expensesテーブルを直接使用（user_idは存在しない）
+        // RLSポリシーがhashed_user_idを使用して自動的にフィルタリングする
         const { data: expensesData, error: expensesError } = await supabase
           .from('expenses')
           .select('*')
-          .eq('user_id', user.id)
           .gte('date', periodStartStr)
           .lte('date', periodEndStr)
           .order('date', { ascending: false })
@@ -119,11 +123,13 @@ export function BudgetPage() {
       const now = new Date()
       const period = calculateBudgetPeriod(startDay, now)
 
+      const hashedUserId = await hashUserId(user.id)
+      
       // 既存の予算を確認
       const { data: existingBudget } = await supabase
         .from('budgets')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('hashed_user_id', hashedUserId)
         .eq('year', period.startYear)
         .eq('month', period.startMonth)
         .single()
@@ -137,11 +143,11 @@ export function BudgetPage() {
 
         if (error) throw error
       } else {
-        // 新規作成
+        // 新規作成（hashed_user_idはトリガーで自動設定されるが、明示的に指定）
         const { error } = await supabase
           .from('budgets')
           .insert({
-            user_id: user.id,
+            hashed_user_id: hashedUserId,
             year: period.startYear,
             month: period.startMonth,
             amount,
@@ -174,11 +180,13 @@ export function BudgetPage() {
 
     setIsSubmittingSettings(true)
     try {
+      const hashedUserId = await hashUserId(user.id)
+      
       // 既存の設定を確認
       const { data: existingSettings } = await supabase
         .from('budget_settings')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('hashed_user_id', hashedUserId)
         .single()
 
       if (existingSettings) {
@@ -194,7 +202,7 @@ export function BudgetPage() {
         const { error } = await supabase
           .from('budget_settings')
           .insert({
-            user_id: user.id,
+            hashed_user_id: hashedUserId,
             start_day: day,
           })
 
@@ -251,10 +259,12 @@ export function BudgetPage() {
 
     setIsSubmittingExpense(true)
     try {
+      const hashedUserId = await hashUserId(user.id)
+      
       const { error } = await supabase
         .from('expenses')
         .insert({
-          user_id: user.id,
+          hashed_user_id: hashedUserId,
           amount,
           date: expenseDate,
           description: expenseDescription || null,
@@ -268,10 +278,10 @@ export function BudgetPage() {
       const periodStartStr = period.start.toISOString().split('T')[0]
       const periodEndStr = period.end.toISOString().split('T')[0]
 
+      // expensesテーブルを直接使用（user_idは存在しない）
       const { data: expensesData, error: fetchError } = await supabase
         .from('expenses')
         .select('*')
-        .eq('user_id', user.id)
         .gte('date', periodStartStr)
         .lte('date', periodEndStr)
         .order('date', { ascending: false })
@@ -316,10 +326,10 @@ export function BudgetPage() {
       const periodStartStr = period.start.toISOString().split('T')[0]
       const periodEndStr = period.end.toISOString().split('T')[0]
 
+      // expensesテーブルを直接使用（user_idは存在しない）
       const { data: expensesData, error: fetchError } = await supabase
         .from('expenses')
         .select('*')
-        .eq('user_id', user.id)
         .gte('date', periodStartStr)
         .lte('date', periodEndStr)
         .order('date', { ascending: false })
@@ -561,20 +571,24 @@ export function BudgetPage() {
                             ¥{Number(expense.amount).toLocaleString()}
                           </p>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <p>{new Date(expense.date).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                            {expense.date && (
+                              <p>{new Date(expense.date).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                            )}
                             {expense.description && (
                               <p>{expense.description}</p>
                             )}
                           </div>
                         </div>
                       </div>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteExpense(expense.id)}
-                      >
-                        削除
-                      </Button>
+                      {expense.id && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteExpense(expense.id!)}
+                        >
+                          削除
+                        </Button>
+                      )}
                     </div>
                   ))}
                   </div>

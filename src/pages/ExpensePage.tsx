@@ -6,8 +6,10 @@ import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { calculateBudgetPeriod } from '../utils/budgetPeriod'
+import { hashUserId } from '../utils/hashUserId'
 import type { Tables } from '../types/supabase'
 
+// expensesテーブルから取得するExpense型
 type Expense = Tables<'expenses'>
 
 export function ExpensePage() {
@@ -26,10 +28,11 @@ export function ExpensePage() {
     const fetchExpenses = async () => {
       try {
         // 予算期間設定を取得
+        const hashedUserId = await hashUserId(user.id)
         const { data: settingsData, error: settingsError } = await supabase
           .from('budget_settings')
           .select('start_day')
-          .eq('user_id', user.id)
+          .eq('hashed_user_id', hashedUserId)
           .single()
 
         let currentStartDay = 1
@@ -48,10 +51,10 @@ export function ExpensePage() {
         const periodStartStr = period.start.toISOString().split('T')[0]
         const periodEndStr = period.end.toISOString().split('T')[0]
 
+        // expensesテーブルを直接使用（user_idは存在しない）
         const { data: expensesData, error: expensesError } = await supabase
           .from('expenses')
           .select('*')
-          .eq('user_id', user.id)
           .gte('date', periodStartStr)
           .lte('date', periodEndStr)
           .order('date', { ascending: false })
@@ -93,10 +96,12 @@ export function ExpensePage() {
 
     setIsSubmitting(true)
     try {
+      const hashedUserId = await hashUserId(user.id)
+      
       const { error } = await supabase
         .from('expenses')
         .insert({
-          user_id: user.id,
+          hashed_user_id: hashedUserId,
           amount,
           date: expenseDate,
           description: expenseDescription || null,
@@ -108,7 +113,7 @@ export function ExpensePage() {
       const { data: settingsData } = await supabase
         .from('budget_settings')
         .select('start_day')
-        .eq('user_id', user.id)
+        .eq('hashed_user_id', hashedUserId)
         .single()
 
       const currentStartDay = settingsData?.start_day || 1
@@ -117,10 +122,10 @@ export function ExpensePage() {
       const periodStartStr = period.start.toISOString().split('T')[0]
       const periodEndStr = period.end.toISOString().split('T')[0]
 
+      // expensesテーブルを直接使用（user_idは存在しない）
       const { data: expensesData, error: fetchError } = await supabase
         .from('expenses')
         .select('*')
-        .eq('user_id', user.id)
         .gte('date', periodStartStr)
         .lte('date', periodEndStr)
         .order('date', { ascending: false })
@@ -157,10 +162,13 @@ export function ExpensePage() {
       if (error) throw error
 
       // データを再取得
+      if (!user) return
+      const hashedUserId = await hashUserId(user.id)
+      
       const { data: settingsData } = await supabase
         .from('budget_settings')
         .select('start_day')
-        .eq('user_id', user!.id)
+        .eq('hashed_user_id', hashedUserId)
         .single()
 
       const currentStartDay = settingsData?.start_day || 1
@@ -169,10 +177,10 @@ export function ExpensePage() {
       const periodStartStr = period.start.toISOString().split('T')[0]
       const periodEndStr = period.end.toISOString().split('T')[0]
 
+      // expensesテーブルを直接使用（user_idは存在しない）
       const { data: expensesData, error: fetchError } = await supabase
         .from('expenses')
         .select('*')
-        .eq('user_id', user!.id)
         .gte('date', periodStartStr)
         .lte('date', periodEndStr)
         .order('date', { ascending: false })
@@ -290,20 +298,24 @@ export function ExpensePage() {
                             ¥{Number(expense.amount).toLocaleString()}
                           </p>
                           <div className="text-sm text-muted-foreground">
-                            <p>{new Date(expense.date).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                            {expense.date && (
+                              <p>{new Date(expense.date).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                            )}
                             {expense.description && (
                               <p className="mt-1">{expense.description}</p>
                             )}
                           </div>
                         </div>
                       </div>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteExpense(expense.id)}
-                      >
-                        削除
-                      </Button>
+                      {expense.id && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteExpense(expense.id!)}
+                        >
+                          削除
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>

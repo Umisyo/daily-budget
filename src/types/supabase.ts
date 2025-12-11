@@ -14,32 +14,83 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_access_logs: {
+        Row: {
+          accessed_at: string | null
+          action: string
+          admin_user_id: string | null
+          id: string
+          metadata: Json | null
+          table_name: string
+        }
+        Insert: {
+          accessed_at?: string | null
+          action: string
+          admin_user_id?: string | null
+          id?: string
+          metadata?: Json | null
+          table_name: string
+        }
+        Update: {
+          accessed_at?: string | null
+          action?: string
+          admin_user_id?: string | null
+          id?: string
+          metadata?: Json | null
+          table_name?: string
+        }
+        Relationships: []
+      }
+      budget_settings: {
+        Row: {
+          created_at: string
+          hashed_user_id: string
+          id: string
+          start_day: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hashed_user_id: string
+          id?: string
+          start_day: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hashed_user_id?: string
+          id?: string
+          start_day?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       budgets: {
         Row: {
           amount: number
           created_at: string
+          hashed_user_id: string
           id: string
           month: number
           updated_at: string
-          user_id: string
           year: number
         }
         Insert: {
           amount: number
           created_at?: string
+          hashed_user_id: string
           id?: string
           month: number
           updated_at?: string
-          user_id: string
           year: number
         }
         Update: {
           amount?: number
           created_at?: string
+          hashed_user_id?: string
           id?: string
           month?: number
           updated_at?: string
-          user_id?: string
           year?: number
         }
         Relationships: []
@@ -50,50 +101,29 @@ export type Database = {
           created_at: string
           date: string
           description: string | null
+          encrypted_description: string | null
+          hashed_user_id: string
           id: string
           updated_at: string
-          user_id: string
         }
         Insert: {
           amount: number
           created_at?: string
           date: string
           description?: string | null
+          encrypted_description?: string | null
+          hashed_user_id: string
           id?: string
           updated_at?: string
-          user_id: string
         }
         Update: {
           amount?: number
           created_at?: string
           date?: string
           description?: string | null
+          encrypted_description?: string | null
+          hashed_user_id?: string
           id?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      budget_settings: {
-        Row: {
-          id: string
-          user_id: string
-          start_day: number
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          start_day: number
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          start_day?: number
-          created_at?: string
           updated_at?: string
         }
         Relationships: []
@@ -103,7 +133,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_user_hashed_id: { Args: never; Returns: string }
+      log_admin_access: {
+        Args: { p_action: string; p_metadata?: Json; p_table_name: string }
+        Returns: string
+      }
+      update_hashed_user_ids: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

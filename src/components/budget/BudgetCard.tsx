@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
-import { formatBudgetPeriod } from '../../utils/budgetPeriod'
+import { formatBudgetPeriod, getRemainingDays } from '../../utils/budgetPeriod'
 
 interface BudgetCardProps {
   budget: number | null
@@ -60,6 +60,8 @@ export function BudgetCard({
   const now = new Date()
   const remainingBudget = budget !== null ? budget - totalExpenses : null
   const budgetPercentage = budget !== null && budget > 0 ? (totalExpenses / budget) * 100 : 0
+  const remainingDays = getRemainingDays(startDay, now)
+  const dailyBudget = remainingBudget !== null && remainingDays > 0 ? remainingBudget / remainingDays : null
 
   return (
     <Card>
@@ -130,6 +132,17 @@ export function BudgetCard({
                   ¥{remainingBudget !== null ? remainingBudget.toLocaleString() : '0'}
                 </p>
               </div>
+              {dailyBudget !== null && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">1日あたりの予算</p>
+                  <p className="text-2xl font-bold text-primary">
+                    ¥{dailyBudget >= 0 ? Math.floor(dailyBudget).toLocaleString() : '0'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    残り{remainingDays}日
+                  </p>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4 pt-4">
                 <div className="p-4 bg-muted rounded-lg">
                   <p className="text-sm text-muted-foreground mb-1">設定予算</p>

@@ -46,3 +46,21 @@ export function formatBudgetPeriod(startDay: number, referenceDate: Date = new D
   return `${startStr} 〜 ${endStr}`
 }
 
+/**
+ * 予算期間の残り日数を計算
+ * @param startDay 予算期間の開始日（1-31）
+ * @param referenceDate 基準日（デフォルトは今日）
+ * @returns 残り日数（今日を含む）
+ */
+export function getRemainingDays(startDay: number, referenceDate: Date = new Date()) {
+  const period = calculateBudgetPeriod(startDay, referenceDate)
+  const today = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate())
+  const endDate = new Date(period.end.getFullYear(), period.end.getMonth(), period.end.getDate())
+  
+  // ミリ秒を日数に変換（今日を含むため+1）
+  const diffTime = endDate.getTime() - today.getTime()
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
+  
+  return Math.max(0, diffDays)
+}
+

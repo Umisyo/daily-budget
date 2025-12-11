@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
@@ -18,6 +18,7 @@ export function ExpenseForm({ onSubmit, isSubmitting, expense, onCancel, inline 
   const [expenseAmount, setExpenseAmount] = useState<string>('')
   const [expenseDate, setExpenseDate] = useState<string>('')
   const [expenseDescription, setExpenseDescription] = useState<string>('')
+  const amountInputRef = useRef<HTMLInputElement>(null)
 
   const isEditMode = !!expense
 
@@ -27,6 +28,10 @@ export function ExpenseForm({ onSubmit, isSubmitting, expense, onCancel, inline 
       setExpenseAmount(expense.amount.toString())
       setExpenseDate(expense.date)
       setExpenseDescription(expense.description || '')
+      // 金額フィールドにフォーカス
+      setTimeout(() => {
+        amountInputRef.current?.focus()
+      }, 0)
     } else {
       // 新規登録モード: 日付フィールドの初期値を今日の日付に設定
       const today = new Date().toISOString().split('T')[0]
@@ -70,6 +75,7 @@ export function ExpenseForm({ onSubmit, isSubmitting, expense, onCancel, inline 
         <div className="space-y-2">
           <Label htmlFor="expense-amount">金額（円）</Label>
           <Input
+            ref={amountInputRef}
             id="expense-amount"
             type="number"
             min="0"

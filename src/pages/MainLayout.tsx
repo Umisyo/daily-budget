@@ -1,18 +1,36 @@
 import { useAuth } from '../contexts/AuthContext'
 import { BudgetPage } from './BudgetPage'
 import { Button } from '../components/ui/button'
+import githubMark from '../components/ui/icons/github-mark.svg'
+import { SignOutIcon } from '../components/ui/icons/akar-icons-sign-out'
 
 export function MainLayout() {
   const { signOut } = useAuth()
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-0 py-4 md:px-4">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Daily Budget</h1>
-          <Button onClick={signOut}>
-            ログアウト
-          </Button>
+      <div className="max-w-4xl mx-auto px-3 py-4 md:px-4">
+        <div className="flex justify-between items-center mb-6 md:mb-8 gap-2 min-w-0">
+          <h1 className="text-xl md:text-2xl font-bold truncate min-w-0">Daily Budget</h1>
+          <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">
+            <a
+              href="https://github.com/Umisyo/daily-budget"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center flex-shrink-0"
+              aria-label="GitHubリポジトリを開く"
+            >
+              <img src={githubMark} alt="GitHub" className="w-5 h-5 md:w-6 md:h-6" />
+            </a>
+            <Button
+              onClick={signOut}
+              size="icon"
+              className="rounded-full"
+              aria-label="ログアウト"
+            >
+              <SignOutIcon />
+            </Button>
+          </div>
         </div>
         <BudgetPage />
       </div>

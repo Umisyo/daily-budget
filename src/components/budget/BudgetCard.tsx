@@ -66,14 +66,14 @@ export function BudgetCard({
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
             <CardTitle className="text-2xl">予算期間</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
               {formatBudgetPeriod(startDay, now)}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 self-center sm:self-auto">
             {onEditSettings && !isEditing && (
               <Button onClick={onEditSettings}>期間設定</Button>
             )}

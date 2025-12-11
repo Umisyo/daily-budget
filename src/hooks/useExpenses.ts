@@ -81,6 +81,29 @@ export function useExpenses(userId: string | null, startDay: number) {
     }
   }
 
+  const updateExpense = async (id: string, amount: number, date: string, description?: string) => {
+    if (!userId) return
+
+    try {
+      const { error } = await supabase
+        .from('expenses')
+        .update({
+          amount,
+          date,
+          description: description || null,
+        })
+        .eq('id', id)
+
+      if (error) throw error
+
+      // データを再取得
+      await fetchExpenses()
+    } catch (err) {
+      console.error('支出更新エラー:', err)
+      throw err
+    }
+  }
+
   const deleteExpense = async (id: string) => {
     if (!userId) return
 
@@ -106,6 +129,7 @@ export function useExpenses(userId: string | null, startDay: number) {
     isLoading,
     error,
     addExpense,
+    updateExpense,
     deleteExpense,
     refetch: fetchExpenses,
   }

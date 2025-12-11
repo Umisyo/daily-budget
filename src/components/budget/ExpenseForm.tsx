@@ -2,22 +2,39 @@ import { useState, useEffect } from 'react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
+import type { Tables } from '../../types/supabase'
+
+type Expense = Tables<'expenses'>
 
 interface ExpenseFormProps {
   onSubmit: (amount: number, date: string, description?: string) => Promise<void>
   isSubmitting: boolean
+  expense?: Expense | null
+  onCancel?: () => void
+  inline?: boolean
 }
 
-export function ExpenseForm({ onSubmit, isSubmitting }: ExpenseFormProps) {
+export function ExpenseForm({ onSubmit, isSubmitting, expense, onCancel, inline = false }: ExpenseFormProps) {
   const [expenseAmount, setExpenseAmount] = useState<string>('')
   const [expenseDate, setExpenseDate] = useState<string>('')
   const [expenseDescription, setExpenseDescription] = useState<string>('')
 
+  const isEditMode = !!expense
+
   useEffect(() => {
-    // 日付フィールドの初期値を今日の日付に設定
-    const today = new Date().toISOString().split('T')[0]
-    setExpenseDate(today)
-  }, [])
+    if (expense) {
+      // 編集モード: 既存の支出データを初期値として設定
+      setExpenseAmount(expense.amount.toString())
+      setExpenseDate(expense.date)
+      setExpenseDescription(expense.description || '')
+    } else {
+      // 新規登録モード: 日付フィールドの初期値を今日の日付に設定
+      const today = new Date().toISOString().split('T')[0]
+      setExpenseDate(today)
+      setExpenseAmount('')
+      setExpenseDescription('')
+    }
+  }, [expense])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,19 +52,21 @@ export function ExpenseForm({ onSubmit, isSubmitting }: ExpenseFormProps) {
 
     try {
       await onSubmit(amount, expenseDate, expenseDescription)
-      // フォームをリセット
-      setExpenseAmount('')
-      setExpenseDescription('')
-      const today = new Date().toISOString().split('T')[0]
-      setExpenseDate(today)
+      // フォームをリセット（編集モードの場合はonCancelが呼ばれる）
+      if (!isEditMode) {
+        setExpenseAmount('')
+        setExpenseDescription('')
+        const today = new Date().toISOString().split('T')[0]
+        setExpenseDate(today)
+      }
     } catch (error) {
       // エラーは親コンポーネントで処理
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 mb-6 pb-6 border-b">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <form onSubmit={handleSubmit} className={inline ? "space-y-4 p-3 border rounded-lg" : "space-y-4 mb-6 pb-6 border-b"}>
+      <div className={inline ? "grid grid-cols-1 md:grid-cols-3 gap-3" : "grid grid-cols-1 md:grid-cols-3 gap-4"}>
         <div className="space-y-2">
           <Label htmlFor="expense-amount">金額（円）</Label>
           <Input
@@ -85,9 +104,14 @@ export function ExpenseForm({ onSubmit, isSubmitting }: ExpenseFormProps) {
           />
         </div>
       </div>
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        {onCancel && (
+          <Button type="button" onClick={onCancel} disabled={isSubmitting}>
+            キャンセル
+          </Button>
+        )}
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? '登録中...' : '登録'}
+          {isSubmitting ? (isEditMode ? '更新中...' : '登録中...') : (isEditMode ? '更新' : '登録')}
         </Button>
       </div>
     </form>

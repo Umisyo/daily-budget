@@ -18,7 +18,7 @@ export function BudgetPage() {
   // カスタムフックを使用
   const { startDay, isLoading: settingsLoading, updateStartDay } = useBudgetSettings(user?.id ?? null)
   const { budget, isLoading: budgetLoading, updateBudget } = useBudgetData(user?.id ?? null, startDay)
-  const { expenses, totalExpenses, isLoading: expensesLoading, addExpense, deleteExpense } = useExpenses(
+  const { expenses, totalExpenses, isLoading: expensesLoading, addExpense, updateExpense, deleteExpense } = useExpenses(
     user?.id ?? null,
     startDay
   )
@@ -59,6 +59,18 @@ export function BudgetPage() {
       await addExpense(amount, date, description)
     } catch (error) {
       alert('支出の登録に失敗しました')
+      throw error
+    } finally {
+      setIsSubmittingExpense(false)
+    }
+  }
+
+  const handleUpdateExpense = async (id: string, amount: number, date: string, description?: string) => {
+    setIsSubmittingExpense(true)
+    try {
+      await updateExpense(id, amount, date, description)
+    } catch (error) {
+      alert('支出の更新に失敗しました')
       throw error
     } finally {
       setIsSubmittingExpense(false)
@@ -113,6 +125,7 @@ export function BudgetPage() {
               expenses={expenses}
               onDelete={handleDeleteExpense}
               onSubmitExpense={handleSubmitExpense}
+              onUpdateExpense={handleUpdateExpense}
               isSubmittingExpense={isSubmittingExpense}
             />
           )}

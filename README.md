@@ -1,73 +1,90 @@
-# React + TypeScript + Vite
+# Daily Budget
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+月あたりの設定予算を日で割った値を表示し、日毎の予算を明確化するWebアプリケーションです。
 
-Currently, two official plugins are available:
+## 概要
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Daily Budgetは、月間予算を日割り計算して表示することで、1日あたりの予算を明確に把握できるようにするツールです。予算管理をより細かく、より分かりやすくすることを目的としています。
 
-## React Compiler
+## 主な機能
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+- **ユーザー認証**: Supabaseを使用したログイン・新規登録機能
+- **月間予算の設定**: 月あたりの予算を設定
+- **日割り計算**: 設定した月間予算を日数で割り、1日あたりの予算を自動計算
+- **日毎の予算表示**: 計算された日毎の予算を分かりやすく表示
 
-## Expanding the ESLint configuration
+## 技術スタック
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **フロントエンド**: React 19 + TypeScript
+- **ビルドツール**: Vite
+- **認証**: Supabase Auth
+- **UIコンポーネント**: Radix UI
+- **スタイリング**: Tailwind CSS
+- **パッケージマネージャー**: pnpm
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## セットアップ
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### 必要な環境
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Node.js (推奨バージョン: 18以上)
+- pnpm
+
+### インストール
+
+```bash
+# 依存関係のインストール
+pnpm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 環境変数の設定
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Supabaseを使用するため、環境変数の設定が必要です。`.env`ファイルを作成し、以下の変数を設定してください：
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### 開発サーバーの起動
+
+```bash
+pnpm dev
+```
+
+開発サーバーが起動したら、ブラウザで `http://localhost:5173` にアクセスしてください。
+
+## ビルド
+
+本番環境用のビルドを作成する場合：
+
+```bash
+pnpm build
+```
+
+ビルドされたファイルは `dist` ディレクトリに出力されます。
+
+## プレビュー
+
+ビルド結果をプレビューする場合：
+
+```bash
+pnpm preview
+```
+
+## プロジェクト構造
+
+```
+daily-budget/
+├── src/
+│   ├── components/        # Reactコンポーネント
+│   │   ├── auth/          # 認証関連コンポーネント
+│   │   └── ui/            # UIコンポーネント
+│   ├── contexts/          # React Context
+│   ├── lib/               # ユーティリティ関数
+│   ├── types/             # TypeScript型定義
+│   ├── utils/             # ヘルパー関数
+│   ├── App.tsx            # メインアプリケーションコンポーネント
+│   └── main.tsx           # エントリーポイント
+├── public/                # 静的ファイル
+└── package.json           # プロジェクト設定
 ```

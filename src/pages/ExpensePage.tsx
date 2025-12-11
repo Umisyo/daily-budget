@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
+import { calculateBudgetPeriod } from '../utils/budgetPeriod'
 import type { Tables } from '../types/supabase'
 
 type Expense = Tables<'expenses'>
@@ -17,26 +18,42 @@ export function ExpensePage() {
   const [expenseAmount, setExpenseAmount] = useState<string>('')
   const [expenseDate, setExpenseDate] = useState<string>('')
   const [expenseDescription, setExpenseDescription] = useState<string>('')
+  const [periodText, setPeriodText] = useState<string>('')
 
   useEffect(() => {
     if (!user) return
 
     const fetchExpenses = async () => {
       try {
-        const now = new Date()
-        const currentYear = now.getFullYear()
-        const currentMonth = now.getMonth() + 1
+        // 予算期間設定を取得
+        const { data: settingsData, error: settingsError } = await supabase
+          .from('budget_settings')
+          .select('start_day')
+          .eq('user_id', user.id)
+          .single()
 
-        // 現在の月の支出を取得
-        const monthStart = new Date(currentYear, currentMonth - 1, 1)
-        const monthEnd = new Date(currentYear, currentMonth, 0, 23, 59, 59)
+        let currentStartDay = 1
+        if (settingsError && settingsError.code !== 'PGRST116') {
+          console.error('設定取得エラー:', settingsError)
+        } else if (settingsData) {
+          currentStartDay = settingsData.start_day
+        }
+
+        // 予算期間を計算
+        const now = new Date()
+        const period = calculateBudgetPeriod(currentStartDay, now)
+        setPeriodText(`${period.start.getFullYear()}年${period.start.getMonth() + 1}月${period.start.getDate()}日 〜 ${period.end.getFullYear()}年${period.end.getMonth() + 1}月${period.end.getDate()}日`)
+
+        // 予算期間内の支出を取得
+        const periodStartStr = period.start.toISOString().split('T')[0]
+        const periodEndStr = period.end.toISOString().split('T')[0]
 
         const { data: expensesData, error: expensesError } = await supabase
           .from('expenses')
           .select('*')
           .eq('user_id', user.id)
-          .gte('date', monthStart.toISOString().split('T')[0])
-          .lte('date', monthEnd.toISOString().split('T')[0])
+          .gte('date', periodStartStr)
+          .lte('date', periodEndStr)
           .order('date', { ascending: false })
           .order('created_at', { ascending: false })
 
@@ -88,18 +105,24 @@ export function ExpensePage() {
       if (error) throw error
 
       // データを再取得
+      const { data: settingsData } = await supabase
+        .from('budget_settings')
+        .select('start_day')
+        .eq('user_id', user.id)
+        .single()
+
+      const currentStartDay = settingsData?.start_day || 1
       const now = new Date()
-      const currentYear = now.getFullYear()
-      const currentMonth = now.getMonth() + 1
-      const monthStart = new Date(currentYear, currentMonth - 1, 1)
-      const monthEnd = new Date(currentYear, currentMonth, 0, 23, 59, 59)
+      const period = calculateBudgetPeriod(currentStartDay, now)
+      const periodStartStr = period.start.toISOString().split('T')[0]
+      const periodEndStr = period.end.toISOString().split('T')[0]
 
       const { data: expensesData, error: fetchError } = await supabase
         .from('expenses')
         .select('*')
         .eq('user_id', user.id)
-        .gte('date', monthStart.toISOString().split('T')[0])
-        .lte('date', monthEnd.toISOString().split('T')[0])
+        .gte('date', periodStartStr)
+        .lte('date', periodEndStr)
         .order('date', { ascending: false })
         .order('created_at', { ascending: false })
 
@@ -134,18 +157,24 @@ export function ExpensePage() {
       if (error) throw error
 
       // データを再取得
+      const { data: settingsData } = await supabase
+        .from('budget_settings')
+        .select('start_day')
+        .eq('user_id', user!.id)
+        .single()
+
+      const currentStartDay = settingsData?.start_day || 1
       const now = new Date()
-      const currentYear = now.getFullYear()
-      const currentMonth = now.getMonth() + 1
-      const monthStart = new Date(currentYear, currentMonth - 1, 1)
-      const monthEnd = new Date(currentYear, currentMonth, 0, 23, 59, 59)
+      const period = calculateBudgetPeriod(currentStartDay, now)
+      const periodStartStr = period.start.toISOString().split('T')[0]
+      const periodEndStr = period.end.toISOString().split('T')[0]
 
       const { data: expensesData, error: fetchError } = await supabase
         .from('expenses')
         .select('*')
         .eq('user_id', user!.id)
-        .gte('date', monthStart.toISOString().split('T')[0])
-        .lte('date', monthEnd.toISOString().split('T')[0])
+        .gte('date', periodStartStr)
+        .lte('date', periodEndStr)
         .order('date', { ascending: false })
         .order('created_at', { ascending: false })
 
@@ -174,6 +203,13 @@ export function ExpensePage() {
 
   return (
     <div className="space-y-6">
+        {periodText && (
+          <div className="mb-4">
+            <p className="text-sm text-muted-foreground">
+              {periodText}
+            </p>
+          </div>
+        )}
           <Card>
             <CardHeader>
               <CardTitle className="text-xl">支出を登録</CardTitle>

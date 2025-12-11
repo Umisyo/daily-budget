@@ -74,6 +74,30 @@ export type Database = {
         }
         Relationships: []
       }
+      budget_settings: {
+        Row: {
+          id: string
+          user_id: string
+          start_day: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          start_day: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          start_day?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
+import { calculateBudgetPeriod, formatBudgetPeriod } from '../utils/budgetPeriod'
 
 export function BudgetPage() {
   const { user } = useAuth()
@@ -14,23 +15,44 @@ export function BudgetPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [budgetAmount, setBudgetAmount] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [startDay, setStartDay] = useState<number>(1)
+  const [isEditingSettings, setIsEditingSettings] = useState(false)
+  const [settingsStartDay, setSettingsStartDay] = useState<string>('1')
+  const [isSubmittingSettings, setIsSubmittingSettings] = useState(false)
 
   useEffect(() => {
     if (!user) return
 
     const fetchBudgetData = async () => {
       try {
-        const now = new Date()
-        const currentYear = now.getFullYear()
-        const currentMonth = now.getMonth() + 1
+        // 予算期間設定を取得
+        const { data: settingsData, error: settingsError } = await supabase
+          .from('budget_settings')
+          .select('start_day')
+          .eq('user_id', user.id)
+          .single()
 
-        // 現在の月の予算を取得
+        let currentStartDay = 1
+        if (settingsError && settingsError.code !== 'PGRST116') {
+          console.error('設定取得エラー:', settingsError)
+        } else if (settingsData) {
+          currentStartDay = settingsData.start_day
+          setStartDay(currentStartDay)
+          setSettingsStartDay(currentStartDay.toString())
+        }
+
+        // 予算期間を計算
+        const now = new Date()
+        const period = calculateBudgetPeriod(currentStartDay, now)
+
+        // 予算期間に対応する予算を取得
+        // 予算は開始月のyear/monthで保存されていると仮定
         const { data: budgetData, error: budgetError } = await supabase
           .from('budgets')
           .select('amount')
           .eq('user_id', user.id)
-          .eq('year', currentYear)
-          .eq('month', currentMonth)
+          .eq('year', period.startYear)
+          .eq('month', period.startMonth)
           .single()
 
         if (budgetError && budgetError.code !== 'PGRST116') {
@@ -39,16 +61,16 @@ export function BudgetPage() {
           setBudget(Number(budgetData.amount))
         }
 
-        // 現在の月の支出合計を取得
-        const monthStart = new Date(currentYear, currentMonth - 1, 1)
-        const monthEnd = new Date(currentYear, currentMonth, 0, 23, 59, 59)
+        // 予算期間内の支出合計を取得
+        const periodStartStr = period.start.toISOString().split('T')[0]
+        const periodEndStr = period.end.toISOString().split('T')[0]
 
         const { data: expensesData, error: expensesError } = await supabase
           .from('expenses')
           .select('amount')
           .eq('user_id', user.id)
-          .gte('date', monthStart.toISOString().split('T')[0])
-          .lte('date', monthEnd.toISOString().split('T')[0])
+          .gte('date', periodStartStr)
+          .lte('date', periodEndStr)
 
         if (expensesError) {
           console.error('支出取得エラー:', expensesError)
@@ -79,16 +101,15 @@ export function BudgetPage() {
     setIsSubmitting(true)
     try {
       const now = new Date()
-      const currentYear = now.getFullYear()
-      const currentMonth = now.getMonth() + 1
+      const period = calculateBudgetPeriod(startDay, now)
 
       // 既存の予算を確認
       const { data: existingBudget } = await supabase
         .from('budgets')
         .select('id')
         .eq('user_id', user.id)
-        .eq('year', currentYear)
-        .eq('month', currentMonth)
+        .eq('year', period.startYear)
+        .eq('month', period.startMonth)
         .single()
 
       if (existingBudget) {
@@ -105,8 +126,8 @@ export function BudgetPage() {
           .from('budgets')
           .insert({
             user_id: user.id,
-            year: currentYear,
-            month: currentMonth,
+            year: period.startYear,
+            month: period.startMonth,
             amount,
           })
 
@@ -123,6 +144,68 @@ export function BudgetPage() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const handleSubmitSettings = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user) return
+
+    const day = parseInt(settingsStartDay)
+    if (isNaN(day) || day < 1 || day > 31) {
+      alert('有効な日付（1-31）を入力してください')
+      return
+    }
+
+    setIsSubmittingSettings(true)
+    try {
+      // 既存の設定を確認
+      const { data: existingSettings } = await supabase
+        .from('budget_settings')
+        .select('id')
+        .eq('user_id', user.id)
+        .single()
+
+      if (existingSettings) {
+        // 更新
+        const { error } = await supabase
+          .from('budget_settings')
+          .update({ start_day: day })
+          .eq('id', existingSettings.id)
+
+        if (error) throw error
+      } else {
+        // 新規作成
+        const { error } = await supabase
+          .from('budget_settings')
+          .insert({
+            user_id: user.id,
+            start_day: day,
+          })
+
+        if (error) throw error
+      }
+
+      setStartDay(day)
+      setIsEditingSettings(false)
+      
+      // データを再取得
+      window.location.reload()
+    } catch (error) {
+      console.error('設定登録エラー:', error)
+      alert('設定の登録に失敗しました')
+    } finally {
+      setIsSubmittingSettings(false)
+    }
+  }
+
+  const handleEditSettingsClick = () => {
+    setIsEditingSettings(true)
+    setSettingsStartDay(startDay.toString())
+  }
+
+  const handleCancelSettingsEdit = () => {
+    setIsEditingSettings(false)
+    setSettingsStartDay(startDay.toString())
   }
 
   const handleEditClick = () => {
@@ -146,8 +229,6 @@ export function BudgetPage() {
   }
 
   const now = new Date()
-  const currentYear = now.getFullYear()
-  const currentMonth = now.getMonth() + 1
   const remainingBudget = budget !== null ? budget - totalExpenses : null
   const budgetPercentage = budget !== null && budget > 0 ? (totalExpenses / budget) * 100 : 0
 
@@ -156,18 +237,65 @@ export function BudgetPage() {
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle className="text-2xl">
-                  {currentYear}年{currentMonth}月の予算
-                </CardTitle>
-                {budget !== null && !isEditing && (
-                  <Button onClick={handleEditClick}>
-                    編集
-                  </Button>
-                )}
+                <div>
+                  <CardTitle className="text-2xl">
+                    予算期間
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {formatBudgetPeriod(startDay, now)}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  {!isEditingSettings && (
+                    <Button onClick={handleEditSettingsClick}>
+                      期間設定
+                    </Button>
+                  )}
+                  {budget !== null && !isEditing && !isEditingSettings && (
+                    <Button onClick={handleEditClick}>
+                      編集
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {budget === null || isEditing ? (
+              {isEditingSettings ? (
+                <div className="py-4">
+                  <form onSubmit={handleSubmitSettings} className="space-y-4 max-w-md mx-auto">
+                    <div className="space-y-2">
+                      <Label htmlFor="start-day">予算期間の開始日（1-31）</Label>
+                      <Input
+                        id="start-day"
+                        type="number"
+                        min="1"
+                        max="31"
+                        step="1"
+                        placeholder="例: 15"
+                        value={settingsStartDay}
+                        onChange={(e) => setSettingsStartDay(e.target.value)}
+                        required
+                        disabled={isSubmittingSettings}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        例: 15を設定すると、毎月15日から翌月14日までが1期間となります
+                      </p>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        type="button"
+                        onClick={handleCancelSettingsEdit}
+                        disabled={isSubmittingSettings}
+                      >
+                        キャンセル
+                      </Button>
+                      <Button type="submit" disabled={isSubmittingSettings}>
+                        {isSubmittingSettings ? '保存中...' : '保存'}
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              ) : budget === null || isEditing ? (
                 <div className="py-8">
                   <form onSubmit={handleSubmitBudget} className="space-y-4 max-w-md mx-auto">
                     <div className="space-y-2">

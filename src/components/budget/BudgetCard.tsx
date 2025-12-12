@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import { Card, CardContent, CardHeader } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
-import { formatBudgetPeriod, getRemainingDays } from '../../utils/budgetPeriod'
+import { getRemainingDays } from '../../utils/budgetPeriod'
+import { PeriodSelector } from './PeriodSelector'
 
 interface BudgetCardProps {
   budget: number | null
@@ -11,6 +12,8 @@ interface BudgetCardProps {
   totalIncomes: number
   startDay: number
   referenceDate?: Date
+  selectedDate: Date
+  onDateChange: (date: Date) => void
   isEditing: boolean
   onEdit: () => void
   onCancel: () => void
@@ -25,6 +28,8 @@ export function BudgetCard({
   totalIncomes,
   startDay,
   referenceDate,
+  selectedDate,
+  onDateChange,
   isEditing,
   onEdit,
   onCancel,
@@ -73,14 +78,13 @@ export function BudgetCard({
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          <div>
-            <CardTitle className="text-2xl">予算期間</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              {formatBudgetPeriod(startDay, now)}
-            </p>
-          </div>
-          <div className="flex gap-2 self-center sm:self-auto">
+        <div className="flex flex-col gap-4">
+          <PeriodSelector
+            startDay={startDay}
+            selectedDate={selectedDate}
+            onDateChange={onDateChange}
+          />
+          <div className="flex gap-2 justify-end">
             {onEditSettings && !isEditing && (
               <Button onClick={onEditSettings}>期間</Button>
             )}

@@ -8,7 +8,6 @@ import { BudgetCard } from '../components/budget/BudgetCard'
 import { BudgetSettingsForm } from '../components/budget/BudgetSettingsForm'
 import { ExpenseList } from '../components/budget/ExpenseList'
 import { IncomeList } from '../components/budget/IncomeList'
-import { PeriodSelector } from '../components/budget/PeriodSelector'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
 import type { PaymentMethod } from '../components/budget/ExpenseForm'
 
@@ -153,17 +152,14 @@ export function BudgetPage() {
         />
       ) : (
         <>
-          <PeriodSelector
-            startDay={startDay}
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
-          />
           <BudgetCard
             budget={budget}
             totalExpenses={totalExpenses}
             totalIncomes={totalIncomes}
             startDay={startDay}
             referenceDate={selectedDate}
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
             isEditing={isEditing}
             onEdit={() => setIsEditing(true)}
             onCancel={() => setIsEditing(false)}

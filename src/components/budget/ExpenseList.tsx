@@ -3,16 +3,28 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { CrossIcon } from '../ui/icons/akar-icons-cross'
 import { PencilIcon } from '../ui/icons/akar-icons-pencil'
-import { ExpenseForm } from './ExpenseForm'
+import { ExpenseForm, type PaymentMethod } from './ExpenseForm'
 import type { Tables } from '../../types/supabase'
 
 type Expense = Tables<'expenses'>
 
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  credit_card: 'クレジットカード',
+  cash: '現金',
+  electronic_money: '電子マネー',
+  other: 'その他',
+}
+
+const getPaymentMethodLabel = (paymentMethod: string | null | undefined): string | null => {
+  if (!paymentMethod) return null
+  return PAYMENT_METHOD_LABELS[paymentMethod] || null
+}
+
 interface ExpenseListProps {
   expenses: Expense[]
   onDelete: (id: string) => Promise<void>
-  onSubmitExpense: (amount: number, date: string, description?: string) => Promise<void>
-  onUpdateExpense: (id: string, amount: number, date: string, description?: string) => Promise<void>
+  onSubmitExpense: (amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null) => Promise<void>
+  onUpdateExpense: (id: string, amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null) => Promise<void>
   isSubmittingExpense: boolean
 }
 
@@ -44,17 +56,17 @@ export function ExpenseList({
     setEditingExpenseId(null)
   }
 
-  const handleSubmitExpense = async (amount: number, date: string, description?: string) => {
+  const handleSubmitExpense = async (amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null) => {
     if (editingExpenseId) {
       try {
-        await onUpdateExpense(editingExpenseId, amount, date, description)
+        await onUpdateExpense(editingExpenseId, amount, date, description, paymentMethod)
         setEditingExpenseId(null)
       } catch (error) {
         // エラーは親コンポーネントで処理
       }
     } else {
       try {
-        await onSubmitExpense(amount, date, description)
+        await onSubmitExpense(amount, date, description, paymentMethod)
       } catch (error) {
         // エラーは親コンポーネントで処理
       }
@@ -115,6 +127,11 @@ export function ExpenseList({
                           </p>
                         )}
                         {expense.description && <p>{expense.description}</p>}
+                        {expense.payment_method && (
+                          <p className="text-xs px-2 py-1 bg-muted rounded-md">
+                            {getPaymentMethodLabel(expense.payment_method)}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>

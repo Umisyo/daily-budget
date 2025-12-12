@@ -56,7 +56,7 @@ export function useExpenses(userId: string | null, startDay: number) {
     fetchExpenses()
   }, [fetchExpenses])
 
-  const addExpense = async (amount: number, date: string, description?: string) => {
+  const addExpense = async (amount: number, date: string, description?: string, paymentMethod?: string | null) => {
     if (!userId) return
 
     try {
@@ -69,6 +69,7 @@ export function useExpenses(userId: string | null, startDay: number) {
           amount,
           date,
           description: description || null,
+          payment_method: paymentMethod || null,
         })
 
       if (error) throw error
@@ -81,7 +82,7 @@ export function useExpenses(userId: string | null, startDay: number) {
     }
   }
 
-  const updateExpense = async (id: string, amount: number, date: string, description?: string) => {
+  const updateExpense = async (id: string, amount: number, date: string, description?: string, paymentMethod?: string | null) => {
     if (!userId) return
 
     try {
@@ -91,6 +92,7 @@ export function useExpenses(userId: string | null, startDay: number) {
           amount,
           date,
           description: description || null,
+          payment_method: paymentMethod || null,
         })
         .eq('id', id)
 

@@ -104,6 +104,7 @@ export type Database = {
           encrypted_description: string | null
           hashed_user_id: string
           id: string
+          payment_method: string | null
           updated_at: string
         }
         Insert: {
@@ -114,6 +115,7 @@ export type Database = {
           encrypted_description?: string | null
           hashed_user_id: string
           id?: string
+          payment_method?: string | null
           updated_at?: string
         }
         Update: {
@@ -124,6 +126,7 @@ export type Database = {
           encrypted_description?: string | null
           hashed_user_id?: string
           id?: string
+          payment_method?: string | null
           updated_at?: string
         }
         Relationships: []

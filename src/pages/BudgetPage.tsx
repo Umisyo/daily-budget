@@ -9,6 +9,7 @@ import { BudgetSettingsForm } from '../components/budget/BudgetSettingsForm'
 import { ExpenseList } from '../components/budget/ExpenseList'
 import { IncomeList } from '../components/budget/IncomeList'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
+import type { PaymentMethod } from '../components/budget/ExpenseForm'
 
 export function BudgetPage() {
   const { user } = useAuth()
@@ -61,10 +62,10 @@ export function BudgetPage() {
     }
   }
 
-  const handleSubmitExpense = async (amount: number, date: string, description?: string) => {
+  const handleSubmitExpense = async (amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null) => {
     setIsSubmittingExpense(true)
     try {
-      await addExpense(amount, date, description)
+      await addExpense(amount, date, description, paymentMethod)
     } catch (error) {
       alert('支出の登録に失敗しました')
       throw error
@@ -73,10 +74,10 @@ export function BudgetPage() {
     }
   }
 
-  const handleUpdateExpense = async (id: string, amount: number, date: string, description?: string) => {
+  const handleUpdateExpense = async (id: string, amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null) => {
     setIsSubmittingExpense(true)
     try {
-      await updateExpense(id, amount, date, description)
+      await updateExpense(id, amount, date, description, paymentMethod)
     } catch (error) {
       alert('支出の更新に失敗しました')
       throw error

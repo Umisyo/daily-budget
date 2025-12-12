@@ -148,7 +148,7 @@ export function BudgetCard({
                   </p>
                 </div>
               )}
-              <div className="grid grid-cols-3 gap-4 pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
                 <div className="p-4 bg-muted rounded-lg">
                   <p className="text-sm text-muted-foreground mb-1">設定予算</p>
                   <p className="text-2xl font-semibold">¥{budget.toLocaleString()}</p>

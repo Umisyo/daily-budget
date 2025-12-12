@@ -4,6 +4,9 @@ import { Button } from '../ui/button'
 import { CrossIcon } from '../ui/icons/akar-icons-cross'
 import { PencilIcon } from '../ui/icons/akar-icons-pencil'
 import { IncomeForm } from './IncomeForm'
+import { showError, getErrorMessage } from '../../utils/errorHandler'
+import { useItemEditor } from '../../hooks/useItemEditor'
+import { confirmDelete } from '../../utils/confirmation'
 import type { Tables } from '../../types/supabase'
 
 type Income = Tables<'incomes'>
@@ -24,39 +27,31 @@ export function IncomeList({
   isSubmittingIncome,
 }: IncomeListProps) {
   const [showAllIncomes, setShowAllIncomes] = useState(false)
-  const [editingIncomeId, setEditingIncomeId] = useState<string | null>(null)
+  const { editingId, startEdit, cancelEdit, isEditing, isAnyEditing } = useItemEditor<Income>()
 
   const handleDelete = async (id: string) => {
-    if (!confirm('この収入を削除しますか？')) return
+    if (!confirmDelete('この収入')) return
 
     try {
       await onDelete(id)
     } catch (error) {
-      // エラーは親コンポーネントで処理
+      showError(getErrorMessage(error, '収入の削除に失敗しました'))
     }
   }
 
-  const handleEdit = (income: Income) => {
-    setEditingIncomeId(income.id)
-  }
-
-  const handleCancelEdit = () => {
-    setEditingIncomeId(null)
-  }
-
   const handleSubmitIncome = async (amount: number, date: string, description?: string) => {
-    if (editingIncomeId) {
+    if (editingId) {
       try {
-        await onUpdateIncome(editingIncomeId, amount, date, description)
-        setEditingIncomeId(null)
+        await onUpdateIncome(editingId, amount, date, description)
+        cancelEdit()
       } catch (error) {
-        // エラーは親コンポーネントで処理
+        showError(getErrorMessage(error, '収入の更新に失敗しました'))
       }
     } else {
       try {
         await onSubmitIncome(amount, date, description)
       } catch (error) {
-        // エラーは親コンポーネントで処理
+        showError(getErrorMessage(error, '収入の登録に失敗しました'))
       }
     }
   }
@@ -68,7 +63,7 @@ export function IncomeList({
       </CardHeader>
       <CardContent>
         {/* 収入登録フォーム（新規登録用） */}
-        {!editingIncomeId && (
+        {!editingId && (
           <IncomeForm
             onSubmit={handleSubmitIncome}
             isSubmitting={isSubmittingIncome}
@@ -81,16 +76,16 @@ export function IncomeList({
         ) : (
           <div className="space-y-2">
             {(showAllIncomes ? incomes : incomes.slice(0, 10)).map((income) => {
-              const isEditing = editingIncomeId === income.id
-              const editingIncome = isEditing ? income : null
+              const incomeIsEditing = isEditing(income)
+              const editingIncome = incomeIsEditing ? income : null
 
-              return isEditing ? (
+              return incomeIsEditing ? (
                 <div key={income.id}>
                   <IncomeForm
                     onSubmit={handleSubmitIncome}
                     isSubmitting={isSubmittingIncome}
                     income={editingIncome}
-                    onCancel={handleCancelEdit}
+                    onCancel={cancelEdit}
                     inline={true}
                   />
                 </div>
@@ -122,9 +117,9 @@ export function IncomeList({
                     <div className="flex gap-2 flex-shrink-0">
                       <Button
                         size="icon"
-                        onClick={() => handleEdit(income)}
+                        onClick={() => startEdit(income)}
                         className="rounded-full"
-                        disabled={!!editingIncomeId}
+                        disabled={isAnyEditing()}
                       >
                         <PencilIcon />
                       </Button>
@@ -132,7 +127,7 @@ export function IncomeList({
                         size="icon"
                         onClick={() => handleDelete(income.id!)}
                         className="rounded-full"
-                        disabled={!!editingIncomeId}
+                        disabled={isAnyEditing()}
                       >
                         <CrossIcon />
                       </Button>

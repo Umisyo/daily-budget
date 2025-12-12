@@ -4,6 +4,16 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { getRemainingDays } from '../../utils/budgetPeriod'
+import {
+  calculateRemainingBudget,
+  calculateAvailableBudget,
+  calculateBudgetPercentage,
+  calculateDailyBudget,
+  getBudgetColorClass,
+  isBudgetOverdrawn,
+} from '../../utils/budgetCalculations'
+import { validateAmount } from '../../utils/validation'
+import { showError } from '../../utils/errorHandler'
 import { PeriodSelector } from './PeriodSelector'
 
 interface BudgetCardProps {
@@ -52,12 +62,15 @@ export function BudgetCard({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const amount = parseFloat(budgetAmount)
-    if (isNaN(amount) || amount < 0) {
-      alert('有効な金額を入力してください')
+    const validation = validateAmount(budgetAmount)
+    if (!validation.isValid) {
+      if (validation.errorMessage) {
+        showError(validation.errorMessage)
+      }
       return
     }
 
+    const amount = parseFloat(budgetAmount)
     try {
       await onSubmit(amount)
       setBudgetAmount('')
@@ -67,13 +80,11 @@ export function BudgetCard({
   }
 
   const now = referenceDate || new Date()
-  // 残り予算 = 予算 + 収入合計 - 支出合計
-  const remainingBudget = budget !== null ? budget + totalIncomes - totalExpenses : null
-  // 使用率の計算: 支出 / (予算 + 収入)
-  const availableBudget = budget !== null ? budget + totalIncomes : 0
-  const budgetPercentage = availableBudget > 0 ? (totalExpenses / availableBudget) * 100 : 0
+  const remainingBudget = calculateRemainingBudget(budget, totalIncomes, totalExpenses)
+  const availableBudget = calculateAvailableBudget(budget, totalIncomes)
+  const budgetPercentage = calculateBudgetPercentage(totalExpenses, availableBudget)
   const remainingDays = getRemainingDays(startDay, now)
-  const dailyBudget = remainingBudget !== null && remainingDays > 0 ? remainingBudget / remainingDays : null
+  const dailyBudget = calculateDailyBudget(remainingBudget, remainingDays)
 
   return (
     <Card>
@@ -135,9 +146,7 @@ export function BudgetCard({
                 <p className="text-sm text-muted-foreground mb-2">残り予算</p>
                 <p
                   className={`text-6xl font-bold ${
-                    remainingBudget !== null && remainingBudget < 0
-                      ? 'text-destructive'
-                      : 'text-primary'
+                    isBudgetOverdrawn(remainingBudget) ? 'text-destructive' : 'text-primary'
                   }`}
                 >
                   ¥{remainingBudget !== null ? remainingBudget.toLocaleString() : '0'}
@@ -171,13 +180,7 @@ export function BudgetCard({
               <div className="pt-4">
                 <div className="w-full bg-muted rounded-full h-4 overflow-hidden">
                   <div
-                    className={`h-full transition-all duration-300 ${
-                      budgetPercentage > 100
-                        ? 'bg-destructive'
-                        : budgetPercentage > 80
-                        ? 'bg-yellow-500'
-                        : 'bg-primary'
-                    }`}
+                    className={`h-full transition-all duration-300 ${getBudgetColorClass(budgetPercentage)}`}
                     style={{ width: `${Math.min(budgetPercentage, 100)}%` }}
                   />
                 </div>

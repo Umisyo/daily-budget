@@ -3,22 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { CrossIcon } from '../ui/icons/akar-icons-cross'
 import { PencilIcon } from '../ui/icons/akar-icons-pencil'
-import { ExpenseForm, type PaymentMethod } from './ExpenseForm'
+import { ExpenseForm } from './ExpenseForm'
+import { showError, getErrorMessage } from '../../utils/errorHandler'
+import { getPaymentMethodLabel } from '../../constants'
+import { useItemEditor } from '../../hooks/useItemEditor'
+import { confirmDelete } from '../../utils/confirmation'
+import type { PaymentMethod } from '../../constants'
 import type { Tables } from '../../types/supabase'
 
 type Expense = Tables<'expenses'>
-
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  credit_card: 'クレジットカード',
-  cash: '現金',
-  electronic_money: '電子マネー',
-  other: 'その他',
-}
-
-const getPaymentMethodLabel = (paymentMethod: string | null | undefined): string | null => {
-  if (!paymentMethod) return null
-  return PAYMENT_METHOD_LABELS[paymentMethod] || null
-}
 
 interface ExpenseListProps {
   expenses: Expense[]
@@ -36,39 +29,31 @@ export function ExpenseList({
   isSubmittingExpense,
 }: ExpenseListProps) {
   const [showAllExpenses, setShowAllExpenses] = useState(false)
-  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null)
+  const { editingId, startEdit, cancelEdit, isEditing, isAnyEditing } = useItemEditor<Expense>()
 
   const handleDelete = async (id: string) => {
-    if (!confirm('この支出を削除しますか？')) return
+    if (!confirmDelete('この支出')) return
 
     try {
       await onDelete(id)
     } catch (error) {
-      // エラーは親コンポーネントで処理
+      showError(getErrorMessage(error, '支出の削除に失敗しました'))
     }
   }
 
-  const handleEdit = (expense: Expense) => {
-    setEditingExpenseId(expense.id)
-  }
-
-  const handleCancelEdit = () => {
-    setEditingExpenseId(null)
-  }
-
   const handleSubmitExpense = async (amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null) => {
-    if (editingExpenseId) {
+    if (editingId) {
       try {
-        await onUpdateExpense(editingExpenseId, amount, date, description, paymentMethod)
-        setEditingExpenseId(null)
+        await onUpdateExpense(editingId, amount, date, description, paymentMethod)
+        cancelEdit()
       } catch (error) {
-        // エラーは親コンポーネントで処理
+        showError(getErrorMessage(error, '支出の更新に失敗しました'))
       }
     } else {
       try {
         await onSubmitExpense(amount, date, description, paymentMethod)
       } catch (error) {
-        // エラーは親コンポーネントで処理
+        showError(getErrorMessage(error, '支出の登録に失敗しました'))
       }
     }
   }
@@ -80,7 +65,7 @@ export function ExpenseList({
       </CardHeader>
       <CardContent>
         {/* 支出登録フォーム（新規登録用） */}
-        {!editingExpenseId && (
+        {!editingId && (
           <ExpenseForm
             onSubmit={handleSubmitExpense}
             isSubmitting={isSubmittingExpense}
@@ -93,16 +78,16 @@ export function ExpenseList({
         ) : (
           <div className="space-y-2">
             {(showAllExpenses ? expenses : expenses.slice(0, 10)).map((expense) => {
-              const isEditing = editingExpenseId === expense.id
-              const editingExpense = isEditing ? expense : null
+              const expenseIsEditing = isEditing(expense)
+              const editingExpense = expenseIsEditing ? expense : null
 
-              return isEditing ? (
+              return expenseIsEditing ? (
                 <div key={expense.id}>
                   <ExpenseForm
                     onSubmit={handleSubmitExpense}
                     isSubmitting={isSubmittingExpense}
                     expense={editingExpense}
-                    onCancel={handleCancelEdit}
+                    onCancel={cancelEdit}
                     inline={true}
                   />
                 </div>
@@ -139,9 +124,9 @@ export function ExpenseList({
                     <div className="flex gap-2 flex-shrink-0">
                       <Button
                         size="icon"
-                        onClick={() => handleEdit(expense)}
+                        onClick={() => startEdit(expense)}
                         className="rounded-full"
-                        disabled={!!editingExpenseId}
+                        disabled={isAnyEditing()}
                       >
                         <PencilIcon />
                       </Button>
@@ -149,7 +134,7 @@ export function ExpenseList({
                         size="icon"
                         onClick={() => handleDelete(expense.id!)}
                         className="rounded-full"
-                        disabled={!!editingExpenseId}
+                        disabled={isAnyEditing()}
                       >
                         <CrossIcon />
                       </Button>

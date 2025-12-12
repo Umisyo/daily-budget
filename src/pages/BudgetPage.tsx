@@ -9,7 +9,8 @@ import { BudgetSettingsForm } from '../components/budget/BudgetSettingsForm'
 import { ExpenseList } from '../components/budget/ExpenseList'
 import { IncomeList } from '../components/budget/IncomeList'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
-import type { PaymentMethod } from '../components/budget/ExpenseForm'
+import { showError, getErrorMessage } from '../utils/errorHandler'
+import type { PaymentMethod } from '../constants'
 
 export function BudgetPage() {
   const { user } = useAuth()
@@ -43,7 +44,7 @@ export function BudgetPage() {
       await updateBudget(amount)
       setIsEditing(false)
     } catch (error) {
-      alert('予算の登録に失敗しました')
+      showError(getErrorMessage(error, '予算の登録に失敗しました'))
       throw error
     } finally {
       setIsSubmitting(false)
@@ -58,7 +59,7 @@ export function BudgetPage() {
       // 設定変更後はページをリロードしてデータを再取得
       window.location.reload()
     } catch (error) {
-      alert('設定の登録に失敗しました')
+      showError(getErrorMessage(error, '設定の登録に失敗しました'))
       throw error
     } finally {
       setIsSubmittingSettings(false)
@@ -70,7 +71,7 @@ export function BudgetPage() {
     try {
       await addExpense(amount, date, description, paymentMethod)
     } catch (error) {
-      alert('支出の登録に失敗しました')
+      showError(getErrorMessage(error, '支出の登録に失敗しました'))
       throw error
     } finally {
       setIsSubmittingExpense(false)
@@ -82,7 +83,7 @@ export function BudgetPage() {
     try {
       await updateExpense(id, amount, date, description, paymentMethod)
     } catch (error) {
-      alert('支出の更新に失敗しました')
+      showError(getErrorMessage(error, '支出の更新に失敗しました'))
       throw error
     } finally {
       setIsSubmittingExpense(false)
@@ -93,7 +94,7 @@ export function BudgetPage() {
     try {
       await deleteExpense(id)
     } catch (error) {
-      alert('支出の削除に失敗しました')
+      showError(getErrorMessage(error, '支出の削除に失敗しました'))
       throw error
     }
   }
@@ -103,7 +104,7 @@ export function BudgetPage() {
     try {
       await addIncome(amount, date, description)
     } catch (error) {
-      alert('収入の登録に失敗しました')
+      showError(getErrorMessage(error, '収入の登録に失敗しました'))
       throw error
     } finally {
       setIsSubmittingIncome(false)
@@ -115,7 +116,7 @@ export function BudgetPage() {
     try {
       await updateIncome(id, amount, date, description)
     } catch (error) {
-      alert('収入の更新に失敗しました')
+      showError(getErrorMessage(error, '収入の更新に失敗しました'))
       throw error
     } finally {
       setIsSubmittingIncome(false)
@@ -126,7 +127,7 @@ export function BudgetPage() {
     try {
       await deleteIncome(id)
     } catch (error) {
-      alert('収入の削除に失敗しました')
+      showError(getErrorMessage(error, '収入の削除に失敗しました'))
       throw error
     }
   }

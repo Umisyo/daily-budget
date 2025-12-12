@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '../utils/supabase'
-import { hashUserId } from '../utils/hashUserId'
-import { calculateBudgetPeriod } from '../utils/budgetPeriod'
+import * as expenseService from '../services/expenseService'
 import type { Tables } from '../types/supabase'
 
 type Expense = Tables<'expenses'>
@@ -22,28 +20,10 @@ export function useExpenses(userId: string | null, startDay: number, referenceDa
       setIsLoading(true)
       setError(null)
 
-      const now = referenceDate || new Date()
-      const period = calculateBudgetPeriod(startDay, now)
-      const periodStartStr = period.start.toISOString().split('T')[0]
-      const periodEndStr = period.end.toISOString().split('T')[0]
-
-      const { data: expensesData, error: expensesError } = await supabase
-        .from('expenses')
-        .select('*')
-        .gte('date', periodStartStr)
-        .lte('date', periodEndStr)
-        .order('date', { ascending: false })
-        .order('created_at', { ascending: false })
-
-      if (expensesError) {
-        throw expensesError
-      }
-
-      if (expensesData) {
-        setExpenses(expensesData)
-        const total = expensesData.reduce((sum, expense) => sum + Number(expense.amount), 0)
-        setTotalExpenses(total)
-      }
+      const expensesData = await expenseService.getExpenses(userId, startDay, referenceDate)
+      setExpenses(expensesData)
+      const total = expensesData.reduce((sum, expense) => sum + Number(expense.amount), 0)
+      setTotalExpenses(total)
     } catch (err) {
       console.error('支出取得エラー:', err)
       setError(err instanceof Error ? err : new Error('支出の取得に失敗しました'))
@@ -60,20 +40,7 @@ export function useExpenses(userId: string | null, startDay: number, referenceDa
     if (!userId) return
 
     try {
-      const hashedUserId = await hashUserId(userId)
-
-      const { error } = await supabase
-        .from('expenses')
-        .insert({
-          hashed_user_id: hashedUserId,
-          amount,
-          date,
-          description: description || null,
-          payment_method: paymentMethod || null,
-        })
-
-      if (error) throw error
-
+      await expenseService.createExpense(userId, amount, date, description, paymentMethod)
       // データを再取得
       await fetchExpenses()
     } catch (err) {
@@ -86,18 +53,7 @@ export function useExpenses(userId: string | null, startDay: number, referenceDa
     if (!userId) return
 
     try {
-      const { error } = await supabase
-        .from('expenses')
-        .update({
-          amount,
-          date,
-          description: description || null,
-          payment_method: paymentMethod || null,
-        })
-        .eq('id', id)
-
-      if (error) throw error
-
+      await expenseService.updateExpense(id, amount, date, description, paymentMethod)
       // データを再取得
       await fetchExpenses()
     } catch (err) {
@@ -110,13 +66,7 @@ export function useExpenses(userId: string | null, startDay: number, referenceDa
     if (!userId) return
 
     try {
-      const { error } = await supabase
-        .from('expenses')
-        .delete()
-        .eq('id', id)
-
-      if (error) throw error
-
+      await expenseService.deleteExpense(id)
       // データを再取得
       await fetchExpenses()
     } catch (err) {

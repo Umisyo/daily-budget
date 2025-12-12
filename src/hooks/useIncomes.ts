@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '../utils/supabase'
-import { hashUserId } from '../utils/hashUserId'
-import { calculateBudgetPeriod } from '../utils/budgetPeriod'
+import * as incomeService from '../services/incomeService'
 import type { Tables } from '../types/supabase'
 
 type Income = Tables<'incomes'>
@@ -22,28 +20,10 @@ export function useIncomes(userId: string | null, startDay: number, referenceDat
       setIsLoading(true)
       setError(null)
 
-      const now = referenceDate || new Date()
-      const period = calculateBudgetPeriod(startDay, now)
-      const periodStartStr = period.start.toISOString().split('T')[0]
-      const periodEndStr = period.end.toISOString().split('T')[0]
-
-      const { data: incomesData, error: incomesError } = await supabase
-        .from('incomes')
-        .select('*')
-        .gte('date', periodStartStr)
-        .lte('date', periodEndStr)
-        .order('date', { ascending: false })
-        .order('created_at', { ascending: false })
-
-      if (incomesError) {
-        throw incomesError
-      }
-
-      if (incomesData) {
-        setIncomes(incomesData)
-        const total = incomesData.reduce((sum, income) => sum + Number(income.amount), 0)
-        setTotalIncomes(total)
-      }
+      const incomesData = await incomeService.getIncomes(userId, startDay, referenceDate)
+      setIncomes(incomesData)
+      const total = incomesData.reduce((sum, income) => sum + Number(income.amount), 0)
+      setTotalIncomes(total)
     } catch (err) {
       console.error('収入取得エラー:', err)
       setError(err instanceof Error ? err : new Error('収入の取得に失敗しました'))
@@ -60,19 +40,7 @@ export function useIncomes(userId: string | null, startDay: number, referenceDat
     if (!userId) return
 
     try {
-      const hashedUserId = await hashUserId(userId)
-
-      const { error } = await supabase
-        .from('incomes')
-        .insert({
-          hashed_user_id: hashedUserId,
-          amount,
-          date,
-          description: description || null,
-        })
-
-      if (error) throw error
-
+      await incomeService.createIncome(userId, amount, date, description)
       // データを再取得
       await fetchIncomes()
     } catch (err) {
@@ -85,17 +53,7 @@ export function useIncomes(userId: string | null, startDay: number, referenceDat
     if (!userId) return
 
     try {
-      const { error } = await supabase
-        .from('incomes')
-        .update({
-          amount,
-          date,
-          description: description || null,
-        })
-        .eq('id', id)
-
-      if (error) throw error
-
+      await incomeService.updateIncome(id, amount, date, description)
       // データを再取得
       await fetchIncomes()
     } catch (err) {
@@ -108,13 +66,7 @@ export function useIncomes(userId: string | null, startDay: number, referenceDat
     if (!userId) return
 
     try {
-      const { error } = await supabase
-        .from('incomes')
-        .delete()
-        .eq('id', id)
-
-      if (error) throw error
-
+      await incomeService.deleteIncome(id)
       // データを再取得
       await fetchIncomes()
     } catch (err) {

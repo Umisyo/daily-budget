@@ -4,6 +4,8 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { formatBudgetPeriod } from '../../utils/budgetPeriod'
+import { validateStartDay } from '../../utils/validation'
+import { showError } from '../../utils/errorHandler'
 
 interface BudgetSettingsFormProps {
   startDay: number
@@ -27,12 +29,15 @@ export function BudgetSettingsForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const day = parseInt(settingsStartDay)
-    if (isNaN(day) || day < 1 || day > 31) {
-      alert('有効な日付（1-31）を入力してください')
+    const validation = validateStartDay(settingsStartDay)
+    if (!validation.isValid) {
+      if (validation.errorMessage) {
+        showError(validation.errorMessage)
+      }
       return
     }
 
+    const day = parseInt(settingsStartDay, 10)
     try {
       await onSubmit(day)
     } catch (error) {

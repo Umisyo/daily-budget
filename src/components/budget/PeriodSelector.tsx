@@ -112,26 +112,23 @@ export function PeriodSelector({ startDay, selectedDate, onDateChange }: PeriodS
           </select>
         </div>
         <div className="flex gap-2 flex-shrink-0">
-          {!isCurrentPeriod && (
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleNextMonth}
-              aria-label="次月"
-            >
-              →
-            </Button>
-          )}
-          {!isCurrentPeriod && (
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleCurrentMonth}
-              className="hidden sm:inline-flex"
-            >
-              今月
-            </Button>
-          )}
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleNextMonth}
+            aria-label="次月"
+            className={isCurrentPeriod ? 'invisible' : ''}
+          >
+            →
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleCurrentMonth}
+            className={`hidden sm:inline-flex ${isCurrentPeriod ? 'invisible' : ''}`}
+          >
+            今月
+          </Button>
         </div>
       </div>
     </div>

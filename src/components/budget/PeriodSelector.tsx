@@ -72,25 +72,26 @@ export function PeriodSelector({ startDay, selectedDate, onDateChange }: PeriodS
   const months = Array.from({ length: 12 }, (_, i) => i + 1)
 
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-muted rounded-lg">
-      <Button
-        type="button"
-        size="sm"
-        onClick={handlePrevMonth}
-        aria-label="前月"
-      >
-        ←
-      </Button>
+    <div className="flex flex-col gap-4 p-4 bg-muted rounded-lg">
       <div className="flex-1">
         <p className="text-sm text-muted-foreground mb-1">表示期間</p>
         <p className="text-base font-medium">{formatBudgetPeriod(startDay, selectedDate)}</p>
       </div>
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-        <div className="flex gap-2">
+      <div className="flex items-center gap-2 w-full">
+        <Button
+          type="button"
+          size="sm"
+          onClick={handlePrevMonth}
+          aria-label="前月"
+          className="flex-shrink-0"
+        >
+          ←
+        </Button>
+        <div className="flex gap-2 flex-1 justify-center">
           <select
             value={year}
             onChange={handleYearChange}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex-1 sm:flex-initial"
           >
             {years.map((y) => (
               <option key={y} value={y}>
@@ -101,7 +102,7 @@ export function PeriodSelector({ startDay, selectedDate, onDateChange }: PeriodS
           <select
             value={month}
             onChange={handleMonthChange}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex-1 sm:flex-initial"
           >
             {months.map((m) => (
               <option key={m} value={m}>
@@ -110,7 +111,7 @@ export function PeriodSelector({ startDay, selectedDate, onDateChange }: PeriodS
             ))}
           </select>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           {!isCurrentPeriod && (
             <Button
               type="button"
@@ -126,6 +127,7 @@ export function PeriodSelector({ startDay, selectedDate, onDateChange }: PeriodS
               type="button"
               size="sm"
               onClick={handleCurrentMonth}
+              className="hidden sm:inline-flex"
             >
               今月
             </Button>

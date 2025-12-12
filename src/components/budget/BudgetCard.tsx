@@ -77,8 +77,8 @@ export function BudgetCard({
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex flex-col gap-4">
+      <CardHeader className="min-w-0 overflow-hidden">
+        <div className="flex flex-col gap-4 min-w-0">
           <PeriodSelector
             startDay={startDay}
             selectedDate={selectedDate}

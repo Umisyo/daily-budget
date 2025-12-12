@@ -10,8 +10,8 @@ export function MainLayout() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className="max-w-4xl mx-auto px-3 py-4 md:px-4 flex-1">
-        <div className="flex justify-between items-center mb-6 md:mb-8 gap-2 min-w-0">
+      <div className="max-w-4xl mx-auto px-0 sm:px-3 py-4 md:px-4 flex-1 w-full">
+        <div className="flex justify-between items-center mb-6 md:mb-8 gap-2 min-w-0 px-4 sm:px-0">
           <h1 className="text-xl md:text-2xl font-bold truncate min-w-0">Daily Budget</h1>
           <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">
             <a

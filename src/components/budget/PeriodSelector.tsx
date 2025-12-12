@@ -72,12 +72,12 @@ export function PeriodSelector({ startDay, selectedDate, onDateChange }: PeriodS
   const months = Array.from({ length: 12 }, (_, i) => i + 1)
 
   return (
-    <div className="flex flex-col gap-4 p-4 bg-muted rounded-lg">
-      <div className="flex-1">
+    <div className="flex flex-col gap-4 p-2 sm:p-4 bg-muted rounded-lg min-w-0 overflow-hidden">
+      <div className="flex-1 min-w-0">
         <p className="text-sm text-muted-foreground mb-1">表示期間</p>
-        <p className="text-base font-medium">{formatBudgetPeriod(startDay, selectedDate)}</p>
+        <p className="text-base font-medium break-words">{formatBudgetPeriod(startDay, selectedDate)}</p>
       </div>
-      <div className="flex items-center gap-2 w-full">
+      <div className="flex items-center gap-1 sm:gap-2 w-full min-w-0 overflow-hidden">
         <Button
           type="button"
           size="sm"
@@ -87,11 +87,11 @@ export function PeriodSelector({ startDay, selectedDate, onDateChange }: PeriodS
         >
           ←
         </Button>
-        <div className="flex gap-2 flex-1 justify-center">
+        <div className="flex gap-1 sm:gap-2 flex-1 justify-center min-w-0 overflow-hidden">
           <select
             value={year}
             onChange={handleYearChange}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex-1 sm:flex-initial"
+            className="h-9 rounded-md border border-input bg-background px-2 sm:px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex-1 sm:flex-initial min-w-0 max-w-[120px] sm:max-w-none"
           >
             {years.map((y) => (
               <option key={y} value={y}>
@@ -102,7 +102,7 @@ export function PeriodSelector({ startDay, selectedDate, onDateChange }: PeriodS
           <select
             value={month}
             onChange={handleMonthChange}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex-1 sm:flex-initial"
+            className="h-9 rounded-md border border-input bg-background px-2 sm:px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex-1 sm:flex-initial min-w-0 max-w-[100px] sm:max-w-none"
           >
             {months.map((m) => (
               <option key={m} value={m}>
@@ -111,7 +111,7 @@ export function PeriodSelector({ startDay, selectedDate, onDateChange }: PeriodS
             ))}
           </select>
         </div>
-        <div className="flex gap-2 flex-shrink-0">
+        <div className="flex gap-1 sm:gap-2 flex-shrink-0">
           <Button
             type="button"
             size="sm"

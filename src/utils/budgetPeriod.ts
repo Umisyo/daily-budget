@@ -64,3 +64,51 @@ export function getRemainingDays(startDay: number, referenceDate: Date = new Dat
   return Math.max(0, diffDays)
 }
 
+/**
+ * 指定された年月の予算期間を計算
+ * @param startDay 予算期間の開始日（1-31）
+ * @param year 年
+ * @param month 月（1-12）
+ * @returns 予算期間の開始日と終了日
+ */
+export function calculateBudgetPeriodForMonth(startDay: number, year: number, month: number) {
+  // 指定された年月の15日を基準日として期間を計算
+  const referenceDate = new Date(year, month - 1, 15)
+  return calculateBudgetPeriod(startDay, referenceDate)
+}
+
+/**
+ * 利用可能な期間のリストを生成
+ * @param startDay 予算期間の開始日（1-31）
+ * @param monthsBack 過去何ヶ月分を取得するか（デフォルトは12）
+ * @returns 期間のリスト（年、月、期間の開始日・終了日を含む）
+ */
+export function getAvailablePeriods(startDay: number, monthsBack: number = 12) {
+  const now = new Date()
+  const periods: Array<{
+    year: number
+    month: number
+    period: ReturnType<typeof calculateBudgetPeriod>
+  }> = []
+
+  for (let i = monthsBack; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 15)
+    const period = calculateBudgetPeriod(startDay, date)
+    
+    // 重複を避ける（同じ年・月の組み合わせが既に存在する場合はスキップ）
+    const exists = periods.some(
+      (p) => p.year === period.startYear && p.month === period.startMonth
+    )
+    
+    if (!exists) {
+      periods.push({
+        year: period.startYear,
+        month: period.startMonth,
+        period,
+      })
+    }
+  }
+
+  return periods
+}
+

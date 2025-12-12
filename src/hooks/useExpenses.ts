@@ -6,7 +6,7 @@ import type { Tables } from '../types/supabase'
 
 type Expense = Tables<'expenses'>
 
-export function useExpenses(userId: string | null, startDay: number) {
+export function useExpenses(userId: string | null, startDay: number, referenceDate?: Date) {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [totalExpenses, setTotalExpenses] = useState<number>(0)
   const [isLoading, setIsLoading] = useState(true)
@@ -22,7 +22,7 @@ export function useExpenses(userId: string | null, startDay: number) {
       setIsLoading(true)
       setError(null)
 
-      const now = new Date()
+      const now = referenceDate || new Date()
       const period = calculateBudgetPeriod(startDay, now)
       const periodStartStr = period.start.toISOString().split('T')[0]
       const periodEndStr = period.end.toISOString().split('T')[0]
@@ -50,7 +50,7 @@ export function useExpenses(userId: string | null, startDay: number) {
     } finally {
       setIsLoading(false)
     }
-  }, [userId, startDay])
+  }, [userId, startDay, referenceDate])
 
   useEffect(() => {
     fetchExpenses()

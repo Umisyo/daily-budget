@@ -3,7 +3,7 @@ import { supabase } from '../utils/supabase'
 import { hashUserId } from '../utils/hashUserId'
 import { calculateBudgetPeriod } from '../utils/budgetPeriod'
 
-export function useBudgetData(userId: string | null, startDay: number) {
+export function useBudgetData(userId: string | null, startDay: number, referenceDate?: Date) {
   const [budget, setBudget] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
@@ -20,7 +20,7 @@ export function useBudgetData(userId: string | null, startDay: number) {
         setError(null)
 
         const hashedUserId = await hashUserId(userId)
-        const now = new Date()
+        const now = referenceDate || new Date()
         const period = calculateBudgetPeriod(startDay, now)
 
         const { data: budgetData, error: budgetError } = await supabase
@@ -49,14 +49,14 @@ export function useBudgetData(userId: string | null, startDay: number) {
     }
 
     fetchBudget()
-  }, [userId, startDay])
+  }, [userId, startDay, referenceDate])
 
   const updateBudget = async (amount: number) => {
     if (!userId) return
 
     try {
       const hashedUserId = await hashUserId(userId)
-      const now = new Date()
+      const now = referenceDate || new Date()
       const period = calculateBudgetPeriod(startDay, now)
 
       // 既存の予算を確認

@@ -10,6 +10,7 @@ interface BudgetCardProps {
   totalExpenses: number
   totalIncomes: number
   startDay: number
+  referenceDate?: Date
   isEditing: boolean
   onEdit: () => void
   onCancel: () => void
@@ -23,6 +24,7 @@ export function BudgetCard({
   totalExpenses,
   totalIncomes,
   startDay,
+  referenceDate,
   isEditing,
   onEdit,
   onCancel,
@@ -59,7 +61,7 @@ export function BudgetCard({
     }
   }
 
-  const now = new Date()
+  const now = referenceDate || new Date()
   // 残り予算 = 予算 + 収入合計 - 支出合計
   const remainingBudget = budget !== null ? budget + totalIncomes - totalExpenses : null
   // 使用率の計算: 支出 / (予算 + 収入)

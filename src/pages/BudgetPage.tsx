@@ -8,6 +8,7 @@ import { BudgetCard } from '../components/budget/BudgetCard'
 import { BudgetSettingsForm } from '../components/budget/BudgetSettingsForm'
 import { ExpenseList } from '../components/budget/ExpenseList'
 import { IncomeList } from '../components/budget/IncomeList'
+import { PeriodSelector } from '../components/budget/PeriodSelector'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
 import type { PaymentMethod } from '../components/budget/ExpenseForm'
 
@@ -19,17 +20,20 @@ export function BudgetPage() {
   const [isSubmittingSettings, setIsSubmittingSettings] = useState(false)
   const [isSubmittingExpense, setIsSubmittingExpense] = useState(false)
   const [isSubmittingIncome, setIsSubmittingIncome] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
 
   // カスタムフックを使用
   const { startDay, isLoading: settingsLoading, updateStartDay } = useBudgetSettings(user?.id ?? null)
-  const { budget, isLoading: budgetLoading, updateBudget } = useBudgetData(user?.id ?? null, startDay)
+  const { budget, isLoading: budgetLoading, updateBudget } = useBudgetData(user?.id ?? null, startDay, selectedDate)
   const { expenses, totalExpenses, isLoading: expensesLoading, addExpense, updateExpense, deleteExpense } = useExpenses(
     user?.id ?? null,
-    startDay
+    startDay,
+    selectedDate
   )
   const { incomes, totalIncomes, isLoading: incomesLoading, addIncome, updateIncome, deleteIncome } = useIncomes(
     user?.id ?? null,
-    startDay
+    startDay,
+    selectedDate
   )
 
   const dataLoading = settingsLoading || budgetLoading || expensesLoading || incomesLoading
@@ -149,11 +153,17 @@ export function BudgetPage() {
         />
       ) : (
         <>
+          <PeriodSelector
+            startDay={startDay}
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+          />
           <BudgetCard
             budget={budget}
             totalExpenses={totalExpenses}
             totalIncomes={totalIncomes}
             startDay={startDay}
+            referenceDate={selectedDate}
             isEditing={isEditing}
             onEdit={() => setIsEditing(true)}
             onCancel={() => setIsEditing(false)}

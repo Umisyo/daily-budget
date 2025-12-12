@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '@/utils/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,6 +15,7 @@ import {
 export function SignUpForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -22,6 +24,12 @@ export function SignUpForm() {
     e.preventDefault()
     setError(null)
     setSuccess(false)
+
+    if (!agreedToPrivacy) {
+      setError('プライバシーポリシーへの同意が必要です')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -36,6 +44,7 @@ export function SignUpForm() {
         setSuccess(true)
         setEmail('')
         setPassword('')
+        setAgreedToPrivacy(false)
       }
     } catch (err) {
       setError('サインアップに失敗しました')
@@ -78,6 +87,31 @@ export function SignUpForm() {
               disabled={loading}
               minLength={6}
             />
+          </div>
+          <div className="flex items-start space-x-2">
+            <input
+              type="checkbox"
+              className="bg-white"
+              id="privacy-agreement"
+              checked={agreedToPrivacy}
+              onChange={(e) => setAgreedToPrivacy(e.target.checked)}
+              disabled={loading}
+            />
+            <Label
+              htmlFor="privacy-agreement"
+              className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              <Link
+                to="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                プライバシーポリシー
+              </Link>
+              に同意する
+            </Label>
           </div>
           {error && (
             <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">

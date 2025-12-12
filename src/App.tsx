@@ -1,6 +1,8 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { AuthPage } from './pages/AuthPage'
 import { MainLayout } from './pages/MainLayout'
+import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage'
 import './App.css'
 
 function AppContent() {
@@ -16,18 +18,31 @@ function AppContent() {
     )
   }
 
-  if (!user) {
-    return <AuthPage />
-  }
-
-  return <MainLayout />
+  return (
+    <Routes>
+      <Route path="/privacy" element={<PrivacyPolicyPage />} />
+      {!user ? (
+        <>
+          <Route path="/" element={<AuthPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </>
+      ) : (
+        <>
+          <Route path="/" element={<MainLayout />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </>
+      )}
+    </Routes>
+  )
 }
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </BrowserRouter>
   )
 }
 

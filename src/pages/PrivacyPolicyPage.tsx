@@ -25,7 +25,7 @@ export function PrivacyPolicyPage() {
               <p className="text-sm text-muted-foreground mb-4 text-left">
                 本アプリケーションは、以下の運営者によって運営されています：
               </p>
-              <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground ml-4 text-left">
+              <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground ml-4 mb-4 text-left">
                 <li>運営者名: クスノキ ソウタ</li>
                 <li>運営者連絡先: kusunokisouta@gmail.com</li>
               </ul>
@@ -33,7 +33,7 @@ export function PrivacyPolicyPage() {
               <p className="text-sm text-muted-foreground mb-4 text-left">
                 本アプリケーションでは、以下の情報を収集・保存しています：
               </p>
-              <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground ml-4 text-left">
+              <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground ml-4 mb-4 text-left">
                 <li>予算設定</li>
                 <li>予算期間</li>
                 <li>収入/支出額</li>
@@ -52,15 +52,17 @@ export function PrivacyPolicyPage() {
               <p className="text-sm text-muted-foreground mb-4 text-left">
                 管理者は、サービス運営・改善・技術的な問題解決のため、データベースから以下の情報を閲覧することができます：
               </p>
-              <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground ml-4 text-left">
+              <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground ml-4 mb-4 text-left">
                 <li>予算設定</li>
                 <li>予算期間</li>
                 <li>収入/支出額</li>
                 <li>日付</li>
                 <li>メモ（説明文）</li>
                 <li>支払い方法（支出の場合）</li>
-                ただし、管理者は、収入・支出情報を登録したユーザーを特定することはできません。
               </ul>
+              <p className="text-sm text-muted-foreground mb-4 text-left">
+                ただし、管理者は、収入・支出情報を登録したユーザーを特定することはできません。
+              </p>
             </section>
 
             <section>

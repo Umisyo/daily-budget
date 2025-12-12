@@ -21,7 +21,15 @@ export function PrivacyPolicyPage() {
           </CardHeader>
           <CardContent className="space-y-6 text-left">
             <section>
-              <h2 className="text-lg font-semibold mb-3 text-left">1. 収集する情報</h2>
+              <h2 className="text-lg font-semibold mb-3 text-left">1. 運営者情報</h2>
+              <p className="text-sm text-muted-foreground mb-4 text-left">
+                本アプリケーションは、以下の運営者によって運営されています：
+              </p>
+              <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground ml-4 text-left">
+                <li>運営者名: クスノキ ソウタ</li>
+                <li>運営者連絡先: kusunokisouta@gmail.com</li>
+              </ul>
+              <h2 className="text-lg font-semibold mb-3 text-left">2. 収集する情報</h2>
               <p className="text-sm text-muted-foreground mb-4 text-left">
                 本アプリケーションでは、以下の情報を収集・保存しています：
               </p>
@@ -33,10 +41,14 @@ export function PrivacyPolicyPage() {
                 <li>メモ（説明文）</li>
                 <li>支払い方法（支出の場合）</li>
               </ul>
+              <p className="text-sm text-muted-foreground mb-4 text-left">
+                <strong className="text-foreground">なお、メモ欄は自由入力項目であり、ユーザーが個人を特定できる情報を入力する可能性があります。</strong>
+                <strong className="text-foreground">ユーザーは、氏名、住所、電話番号、メールアドレスなど、個人を直接特定できる情報の入力を控えるものとします。</strong>
+              </p>
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold mb-3 text-left">2. 管理者によるデータ閲覧について</h2>
+              <h2 className="text-lg font-semibold mb-3 text-left">3. 管理者によるデータ閲覧について</h2>
               <p className="text-sm text-muted-foreground mb-4 text-left">
                 管理者は、サービス運営・改善・技術的な問題解決のため、データベースから以下の情報を閲覧することができます：
               </p>
@@ -47,11 +59,12 @@ export function PrivacyPolicyPage() {
                 <li>日付</li>
                 <li>メモ（説明文）</li>
                 <li>支払い方法（支出の場合）</li>
+                ただし、管理者は、収入・支出情報を登録したユーザーを特定することはできません。
               </ul>
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold mb-3 text-left">3. プライバシー保護措置</h2>
+              <h2 className="text-lg font-semibold mb-3 text-left">4. プライバシー保護措置</h2>
               <div className="space-y-3 text-sm text-muted-foreground text-left">
                 <p>
                   <strong className="text-foreground">ユーザーIDのハッシュ化：</strong>
@@ -62,17 +75,13 @@ export function PrivacyPolicyPage() {
                   <strong className="text-foreground">Row Level Security (RLS)：</strong>
                   各ユーザーは自分のデータのみにアクセス可能です。他のユーザーのデータにアクセスすることはできません。
                 </p>
-                <p>
-                  <strong className="text-foreground">アクセスログ：</strong>
-                  管理者によるデータアクセスは記録され、適切に管理されています。
-                </p>
               </div>
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold mb-3 text-left">4. データの利用目的</h2>
+              <h2 className="text-lg font-semibold mb-3 text-left">5. データの利用目的</h2>
               <p className="text-sm text-muted-foreground text-left">
-                収集したデータは、以下の目的でのみ使用されます：
+                収集したデータは、以下の目的でのみ使用され、第三者に提供されることはありません：
               </p>
               <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground ml-4 mt-2 text-left">
                 <li>サービスの提供・運営</li>
@@ -82,7 +91,7 @@ export function PrivacyPolicyPage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold mb-3 text-left">5. お問い合わせ</h2>
+              <h2 className="text-lg font-semibold mb-3 text-left">6. お問い合わせ</h2>
               <p className="text-sm text-muted-foreground text-left">
                 プライバシーポリシーに関するご質問やご意見がございましたら、
                 <a
@@ -93,7 +102,7 @@ export function PrivacyPolicyPage() {
                 >
                   GitHubリポジトリ
                 </a>
-                までお問い合わせください。
+                または運営者情報に記載のメールアドレスまでお問い合わせください。
               </p>
             </section>
 

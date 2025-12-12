@@ -12,7 +12,7 @@ interface UseIncomeFormOptions {
   onCancel?: () => void
 }
 
-export function useIncomeForm({ income, onSubmit, isSubmitting, onCancel }: UseIncomeFormOptions) {
+export function useIncomeForm({ income, onSubmit, isSubmitting: _isSubmitting, onCancel: _onCancel }: UseIncomeFormOptions) {
   const [incomeAmount, setIncomeAmount] = useState<string>('')
   const [incomeDate, setIncomeDate] = useState<string>('')
   const [incomeDescription, setIncomeDescription] = useState<string>('')

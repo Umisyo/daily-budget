@@ -7,9 +7,10 @@ type Expense = Tables<'expenses'>
 
 /**
  * 支出データの取得
+ * @param _userId ユーザーID（将来のRLS実装用に保持）
  */
 export async function getExpenses(
-  userId: string,
+  _userId: string,
   startDay: number,
   referenceDate?: Date
 ): Promise<Expense[]> {

@@ -13,7 +13,7 @@ interface UseExpenseFormOptions {
   onCancel?: () => void
 }
 
-export function useExpenseForm({ expense, onSubmit, isSubmitting, onCancel }: UseExpenseFormOptions) {
+export function useExpenseForm({ expense, onSubmit, isSubmitting: _isSubmitting, onCancel: _onCancel }: UseExpenseFormOptions) {
   const [expenseAmount, setExpenseAmount] = useState<string>('')
   const [expenseDate, setExpenseDate] = useState<string>('')
   const [expenseDescription, setExpenseDescription] = useState<string>('')

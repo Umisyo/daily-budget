@@ -17,13 +17,13 @@ export function calculateBudgetPeriod(startDay: number, referenceDate: Date = ne
     periodStart = new Date(year, month - 1, startDay)
     const nextMonth = month === 12 ? 1 : month + 1
     const nextYear = month === 12 ? year + 1 : year
-    periodEnd = new Date(nextYear, nextMonth - 1, startDay - 1)
+    periodEnd = new Date(nextYear, nextMonth - 1, startDay - 1, 23, 59, 59, 999)
   } else {
     // 今日が開始日より前の場合、先月の開始日から今月の開始日の前日まで
     const prevMonth = month === 1 ? 12 : month - 1
     const prevYear = month === 1 ? year - 1 : year
     periodStart = new Date(prevYear, prevMonth - 1, startDay)
-    periodEnd = new Date(year, month - 1, startDay - 1)
+    periodEnd = new Date(year, month - 1, startDay - 1, 23, 59, 59, 999)
   }
 
   return {

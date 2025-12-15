@@ -8,16 +8,18 @@ type Expense = Tables<'expenses'>
 
 interface UseExpenseFormOptions {
   expense?: Expense | null
-  onSubmit: (amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null) => Promise<void>
+  onSubmit: (amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null, tagIds?: string[]) => Promise<void>
   isSubmitting: boolean
   onCancel?: () => void
+  initialTagIds?: string[]
 }
 
-export function useExpenseForm({ expense, onSubmit, isSubmitting: _isSubmitting, onCancel: _onCancel }: UseExpenseFormOptions) {
+export function useExpenseForm({ expense, onSubmit, isSubmitting: _isSubmitting, onCancel: _onCancel, initialTagIds = [] }: UseExpenseFormOptions) {
   const [expenseAmount, setExpenseAmount] = useState<string>('')
   const [expenseDate, setExpenseDate] = useState<string>('')
   const [expenseDescription, setExpenseDescription] = useState<string>('')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | ''>('')
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialTagIds)
   const amountInputRef = useRef<HTMLInputElement>(null)
 
   const isEditMode = !!expense
@@ -29,6 +31,8 @@ export function useExpenseForm({ expense, onSubmit, isSubmitting: _isSubmitting,
       setExpenseDate(expense.date)
       setExpenseDescription(expense.description || '')
       setPaymentMethod((expense.payment_method as PaymentMethod) || '')
+      // タグは親コンポーネントから渡されるinitialTagIdsを使用
+      setSelectedTagIds(initialTagIds)
       // 金額フィールドにフォーカス
       setTimeout(() => {
         amountInputRef.current?.focus()
@@ -40,8 +44,9 @@ export function useExpenseForm({ expense, onSubmit, isSubmitting: _isSubmitting,
       setExpenseAmount('')
       setExpenseDescription('')
       setPaymentMethod('')
+      setSelectedTagIds([])
     }
-  }, [expense])
+  }, [expense, initialTagIds])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,12 +69,13 @@ export function useExpenseForm({ expense, onSubmit, isSubmitting: _isSubmitting,
 
     const amount = parseFloat(expenseAmount)
     try {
-      await onSubmit(amount, expenseDate, expenseDescription, paymentMethod || null)
+      await onSubmit(amount, expenseDate, expenseDescription, paymentMethod || null, selectedTagIds)
       // フォームをリセット（編集モードの場合はonCancelが呼ばれる）
       if (!isEditMode) {
         setExpenseAmount('')
         setExpenseDescription('')
         setPaymentMethod('')
+        setSelectedTagIds([])
         const today = new Date().toISOString().split('T')[0]
         setExpenseDate(today)
       }
@@ -87,6 +93,8 @@ export function useExpenseForm({ expense, onSubmit, isSubmitting: _isSubmitting,
     setExpenseDescription,
     paymentMethod,
     setPaymentMethod,
+    selectedTagIds,
+    setSelectedTagIds,
     amountInputRef,
     isEditMode,
     handleSubmit,

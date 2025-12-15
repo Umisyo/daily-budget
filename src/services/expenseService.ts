@@ -1,6 +1,7 @@
 import { supabase } from '../utils/supabase'
 import { hashUserId } from '../utils/hashUserId'
 import { calculateBudgetPeriod } from '../utils/budgetPeriod'
+import { updateExpenseTags } from './tagService'
 import type { Tables } from '../types/supabase'
 
 type Expense = Tables<'expenses'>
@@ -42,19 +43,31 @@ export async function createExpense(
   amount: number,
   date: string,
   description?: string,
-  paymentMethod?: string | null
-): Promise<void> {
+  paymentMethod?: string | null,
+  tagIds?: string[]
+): Promise<string> {
   const hashedUserId = await hashUserId(userId)
 
-  const { error } = await supabase.from('expenses').insert({
-    hashed_user_id: hashedUserId,
-    amount,
-    date,
-    description: description || null,
-    payment_method: paymentMethod || null,
-  })
+  const { data, error } = await supabase
+    .from('expenses')
+    .insert({
+      hashed_user_id: hashedUserId,
+      amount,
+      date,
+      description: description || null,
+      payment_method: paymentMethod || null,
+    })
+    .select('id')
+    .single()
 
   if (error) throw error
+
+  // タグを関連付け
+  if (data?.id && tagIds && tagIds.length > 0) {
+    await updateExpenseTags(data.id, tagIds)
+  }
+
+  return data.id
 }
 
 /**
@@ -65,7 +78,8 @@ export async function updateExpense(
   amount: number,
   date: string,
   description?: string,
-  paymentMethod?: string | null
+  paymentMethod?: string | null,
+  tagIds?: string[]
 ): Promise<void> {
   const { error } = await supabase
     .from('expenses')
@@ -78,6 +92,11 @@ export async function updateExpense(
     .eq('id', id)
 
   if (error) throw error
+
+  // タグを更新
+  if (tagIds !== undefined) {
+    await updateExpenseTags(id, tagIds)
+  }
 }
 
 /**

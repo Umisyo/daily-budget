@@ -1,15 +1,19 @@
+import { useState, useEffect } from 'react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { useExpenseForm } from '../../hooks/useExpenseForm'
+import { TagSelector } from './TagSelector'
 import { PAYMENT_METHODS } from '../../constants'
+import { useAuth } from '../../contexts/AuthContext'
+import * as tagService from '../../services/tagService'
 import type { PaymentMethod } from '../../constants'
 import type { Tables } from '../../types/supabase'
 
 type Expense = Tables<'expenses'>
 
 interface ExpenseFormProps {
-  onSubmit: (amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null) => Promise<void>
+  onSubmit: (amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null, tagIds?: string[]) => Promise<void>
   isSubmitting: boolean
   expense?: Expense | null
   onCancel?: () => void
@@ -17,6 +21,25 @@ interface ExpenseFormProps {
 }
 
 export function ExpenseForm({ onSubmit, isSubmitting, expense, onCancel, inline = false }: ExpenseFormProps) {
+  const { user } = useAuth()
+  const [initialTagIds, setInitialTagIds] = useState<string[]>([])
+
+  // 編集モードの場合、既存のタグを取得
+  useEffect(() => {
+    if (expense?.id && user?.id) {
+      tagService
+        .getTagsForExpense(expense.id)
+        .then((tags) => {
+          setInitialTagIds(tags.map((tag) => tag.id))
+        })
+        .catch((error) => {
+          console.error('タグの取得に失敗しました:', error)
+        })
+    } else {
+      setInitialTagIds([])
+    }
+  }, [expense?.id, user?.id])
+
   const {
     expenseAmount,
     setExpenseAmount,
@@ -26,10 +49,12 @@ export function ExpenseForm({ onSubmit, isSubmitting, expense, onCancel, inline 
     setExpenseDescription,
     paymentMethod,
     setPaymentMethod,
+    selectedTagIds,
+    setSelectedTagIds,
     amountInputRef,
     isEditMode,
     handleSubmit,
-  } = useExpenseForm({ expense, onSubmit, isSubmitting, onCancel })
+  } = useExpenseForm({ expense, onSubmit, isSubmitting, onCancel, initialTagIds })
 
   return (
     <form onSubmit={handleSubmit} className={inline ? "space-y-4 p-3 border rounded-lg" : "space-y-4 mb-6 pb-6 border-b"}>
@@ -89,6 +114,16 @@ export function ExpenseForm({ onSubmit, isSubmitting, expense, onCancel, inline 
           </select>
         </div>
       </div>
+      {user?.id && (
+        <div className="mt-4">
+          <TagSelector
+            userId={user.id}
+            selectedTagIds={selectedTagIds}
+            onChange={setSelectedTagIds}
+            disabled={isSubmitting}
+          />
+        </div>
+      )}
       <div className="flex justify-end gap-2">
         {onCancel && (
           <Button type="button" onClick={onCancel} disabled={isSubmitting}>

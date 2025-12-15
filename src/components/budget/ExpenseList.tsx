@@ -1,23 +1,26 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { CrossIcon } from '../ui/icons/akar-icons-cross'
 import { PencilIcon } from '../ui/icons/akar-icons-pencil'
 import { ExpenseForm } from './ExpenseForm'
+import { TagDisplay } from './TagDisplay'
 import { showError, getErrorMessage } from '../../utils/errorHandler'
 import { getPaymentMethodLabel } from '../../constants'
 import { useItemEditor } from '../../hooks/useItemEditor'
 import { confirmDelete } from '../../utils/confirmation'
+import * as tagService from '../../services/tagService'
 import type { PaymentMethod } from '../../constants'
 import type { Tables } from '../../types/supabase'
 
 type Expense = Tables<'expenses'>
+type Tag = Tables<'tags'>
 
 interface ExpenseListProps {
   expenses: Expense[]
   onDelete: (id: string) => Promise<void>
-  onSubmitExpense: (amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null) => Promise<void>
-  onUpdateExpense: (id: string, amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null) => Promise<void>
+  onSubmitExpense: (amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null, tagIds?: string[]) => Promise<void>
+  onUpdateExpense: (id: string, amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null, tagIds?: string[]) => Promise<void>
   isSubmittingExpense: boolean
 }
 
@@ -29,7 +32,26 @@ export function ExpenseList({
   isSubmittingExpense,
 }: ExpenseListProps) {
   const [showAllExpenses, setShowAllExpenses] = useState(false)
+  const [expenseTags, setExpenseTags] = useState<Record<string, Tag[]>>({})
   const { editingId, startEdit, cancelEdit, isEditing, isAnyEditing } = useItemEditor<Expense>()
+
+  // 支出に紐づくタグを取得
+  useEffect(() => {
+    const expenseIds = expenses.map((e) => e.id).filter((id): id is string => !!id)
+    if (expenseIds.length === 0) {
+      setExpenseTags({})
+      return
+    }
+
+    tagService
+      .getTagsForExpenses(expenseIds)
+      .then((tags) => {
+        setExpenseTags(tags)
+      })
+      .catch((error) => {
+        console.error('タグの取得に失敗しました:', error)
+      })
+  }, [expenses])
 
   const handleDelete = async (id: string) => {
     if (!confirmDelete('この支出')) return
@@ -41,17 +63,17 @@ export function ExpenseList({
     }
   }
 
-  const handleSubmitExpense = async (amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null) => {
+  const handleSubmitExpense = async (amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null, tagIds?: string[]) => {
     if (editingId) {
       try {
-        await onUpdateExpense(editingId, amount, date, description, paymentMethod)
+        await onUpdateExpense(editingId, amount, date, description, paymentMethod, tagIds)
         cancelEdit()
       } catch (error) {
         showError(getErrorMessage(error, '支出の更新に失敗しました'))
       }
     } else {
       try {
-        await onSubmitExpense(amount, date, description, paymentMethod)
+        await onSubmitExpense(amount, date, description, paymentMethod, tagIds)
       } catch (error) {
         showError(getErrorMessage(error, '支出の登録に失敗しました'))
       }
@@ -118,6 +140,11 @@ export function ExpenseList({
                           </p>
                         )}
                       </div>
+                      {expense.id && expenseTags[expense.id] && expenseTags[expense.id].length > 0 && (
+                        <div className="mt-2">
+                          <TagDisplay tags={expenseTags[expense.id]} />
+                        </div>
+                      )}
                     </div>
                   </div>
                   {expense.id && (

@@ -36,11 +36,11 @@ export function useExpenses(userId: string | null, startDay: number, referenceDa
     fetchExpenses()
   }, [fetchExpenses])
 
-  const addExpense = async (amount: number, date: string, description?: string, paymentMethod?: string | null) => {
+  const addExpense = async (amount: number, date: string, description?: string, paymentMethod?: string | null, tagIds?: string[]) => {
     if (!userId) return
 
     try {
-      await expenseService.createExpense(userId, amount, date, description, paymentMethod)
+      await expenseService.createExpense(userId, amount, date, description, paymentMethod, tagIds)
       // データを再取得
       await fetchExpenses()
     } catch (err) {
@@ -49,11 +49,11 @@ export function useExpenses(userId: string | null, startDay: number, referenceDa
     }
   }
 
-  const updateExpense = async (id: string, amount: number, date: string, description?: string, paymentMethod?: string | null) => {
+  const updateExpense = async (id: string, amount: number, date: string, description?: string, paymentMethod?: string | null, tagIds?: string[]) => {
     if (!userId) return
 
     try {
-      await expenseService.updateExpense(id, amount, date, description, paymentMethod)
+      await expenseService.updateExpense(id, amount, date, description, paymentMethod, tagIds)
       // データを再取得
       await fetchExpenses()
     } catch (err) {

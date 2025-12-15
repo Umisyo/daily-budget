@@ -66,10 +66,10 @@ export function BudgetPage() {
     }
   }
 
-  const handleSubmitExpense = async (amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null) => {
+  const handleSubmitExpense = async (amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null, tagIds?: string[]) => {
     setIsSubmittingExpense(true)
     try {
-      await addExpense(amount, date, description, paymentMethod)
+      await addExpense(amount, date, description, paymentMethod, tagIds)
     } catch (error) {
       showError(getErrorMessage(error, '支出の登録に失敗しました'))
       throw error
@@ -78,10 +78,10 @@ export function BudgetPage() {
     }
   }
 
-  const handleUpdateExpense = async (id: string, amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null) => {
+  const handleUpdateExpense = async (id: string, amount: number, date: string, description?: string, paymentMethod?: PaymentMethod | null, tagIds?: string[]) => {
     setIsSubmittingExpense(true)
     try {
-      await updateExpense(id, amount, date, description, paymentMethod)
+      await updateExpense(id, amount, date, description, paymentMethod, tagIds)
     } catch (error) {
       showError(getErrorMessage(error, '支出の更新に失敗しました'))
       throw error

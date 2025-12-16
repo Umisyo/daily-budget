@@ -1,0 +1,243 @@
+---
+alwaysApply: true
+---
+
+# プロジェクト構造
+
+このファイルでは、プロジェクトの構造、アーキテクチャ、各ディレクトリの役割について説明します。
+
+## プロジェクト概要
+
+Daily Budgetは、月間予算を日割り計算して表示することで、1日あたりの予算を明確に把握できるようにするWebアプリケーションです。
+
+### 技術スタック
+
+- **フロントエンド**: React 19 + TypeScript
+- **ビルドツール**: Vite
+- **認証・データベース**: Supabase (Auth + PostgreSQL)
+- **UIコンポーネント**: Radix UI
+- **スタイリング**: Tailwind CSS
+- **ルーティング**: React Router DOM
+- **パッケージマネージャー**: pnpm
+- **テスト**: Vitest + Testing Library
+
+## ディレクトリ構造
+
+### src/pages/
+
+ページレベルのコンポーネント（ルーティング対応）。各ページは認証状態に応じて表示が切り替わります。
+
+- `AuthPage.tsx`: 認証ページ（ログイン・新規登録）
+- `BudgetPage.tsx`: メインの予算管理ページ（予算設定、支出・収入の管理）
+- `MainLayout.tsx`: 認証済みユーザー向けのレイアウトコンポーネント（ヘッダー、フッターを含む）
+- `PrivacyPolicyPage.tsx`: プライバシーポリシーページ
+
+### src/components/
+
+再利用可能なUIコンポーネント。機能ごとにサブディレクトリに分類されています。
+
+#### components/auth/
+
+認証関連のコンポーネント
+
+- `LoginForm.tsx`: ログインフォーム
+- `SignUpForm.tsx`: 新規登録フォーム
+
+#### components/budget/
+
+予算管理関連のコンポーネント
+
+- `BudgetCard.tsx`: 予算カード（日割り予算の表示）
+- `BudgetSettingsForm.tsx`: 予算設定フォーム
+- `ExpenseForm.tsx`: 支出登録フォーム
+- `ExpenseList.tsx`: 支出一覧表示
+- `IncomeForm.tsx`: 収入登録フォーム
+- `IncomeList.tsx`: 収入一覧表示
+- `PeriodSelector.tsx`: 予算期間の選択コンポーネント
+- `TagDisplay.tsx`: タグ表示コンポーネント
+- `TagSelector.tsx`: タグ選択コンポーネント
+
+#### components/ui/
+
+汎用UIコンポーネント（Radix UIベースのshadcn/uiスタイル）
+
+- `button.tsx`: ボタンコンポーネント
+- `card.tsx`: カードコンポーネント
+- `input.tsx`: 入力フィールドコンポーネント
+- `label.tsx`: ラベルコンポーネント
+- `tabs.tsx`: タブコンポーネント
+- `Footer.tsx`: フッターコンポーネント
+- `icons/`: アイコンコンポーネント（Akar Icons、GitHubマークなど）
+
+### src/hooks/
+
+カスタムフック。ビジネスロジックと状態管理をカプセル化します。Services層を呼び出してデータを取得・更新します。
+
+- `useBudgetData.ts`: 予算データの取得・更新
+- `useBudgetSettings.ts`: 予算設定（開始日など）の取得・更新
+- `useExpenseForm.ts`: 支出フォームの状態管理
+- `useExpenses.ts`: 支出データの取得・追加・更新・削除
+- `useIncomeForm.ts`: 収入フォームの状態管理
+- `useIncomes.ts`: 収入データの取得・追加・更新・削除
+- `useItemEditor.ts`: アイテム（支出・収入）の編集状態管理
+
+### src/services/
+
+Supabaseとの通信層。データベース操作を抽象化し、ビジネスロジックを実装します。すべてのサービス関数はユーザーIDをハッシュ化してからデータベースに保存します。
+
+- `budgetService.ts`: 予算データのCRUD操作
+- `budgetSettingsService.ts`: 予算設定のCRUD操作
+- `expenseService.ts`: 支出データのCRUD操作
+- `incomeService.ts`: 収入データのCRUD操作
+- `tagService.ts`: タグデータのCRUD操作
+
+各サービスには対応する `.test.ts` ファイルが存在します。
+
+### src/utils/
+
+ユーティリティ関数。純粋関数やヘルパー関数を提供します。
+
+- `budgetCalculations.ts`: 予算計算ロジック（日割り計算など）
+- `budgetPeriod.ts`: 予算期間の計算（開始日を基準とした月の計算）
+- `confirmation.ts`: 確認ダイアログの表示
+- `errorHandler.ts`: エラーハンドリング（エラーメッセージの表示など）
+- `hashUserId.ts`: ユーザーIDのハッシュ化（プライバシー保護）
+- `supabase.ts`: Supabaseクライアントの初期化
+- `validation.ts`: バリデーション関数
+
+各ユーティリティには対応する `.test.ts` ファイルが存在します。
+
+### src/contexts/
+
+React Context。アプリケーション全体で共有する状態を管理します。
+
+- `AuthContext.tsx`: 認証状態の管理（ユーザー情報、セッション、ログアウト機能）
+
+### src/types/
+
+TypeScript型定義。
+
+- `supabase.ts`: Supabaseのデータベーススキーマから生成された型定義
+
+### src/constants/
+
+アプリケーション全体で使用する定数。
+
+- `index.ts`: 支払い方法の定義など
+
+### src/lib/
+
+ライブラリ関連のユーティリティ。
+
+- `utils.ts`: Tailwind CSS関連のユーティリティ（`cn`関数など、クラス名のマージ）
+
+### src/test/
+
+テスト設定ファイル。
+
+- `setup.ts`: テスト環境のセットアップ（Testing Libraryの設定など）
+
+### その他のファイル
+
+- `App.tsx`: メインアプリケーションコンポーネント（ルーティング設定、認証状態による表示切り替え）
+- `main.tsx`: エントリーポイント（Reactアプリの初期化）
+- `App.css`: アプリケーション全体のスタイル
+- `index.css`: グローバルスタイル（Tailwind CSSのインポートなど）
+
+## アーキテクチャパターン
+
+### レイヤードアーキテクチャ
+
+このプロジェクトは以下のレイヤー構造を採用しています：
+
+```
+Pages → Components → Hooks → Services → Supabase
+```
+
+1. **Pages層**: ルーティングとページレイアウトを担当
+2. **Components層**: 再利用可能なUIコンポーネント
+3. **Hooks層**: ビジネスロジックと状態管理をカプセル化
+4. **Services層**: データベース操作の抽象化
+5. **Supabase層**: 実際のデータベース通信
+
+### データフロー
+
+1. ページコンポーネント（`BudgetPage.tsx`など）がカスタムフック（`useBudgetData`など）を使用
+2. カスタムフックがサービス層（`budgetService.ts`など）を呼び出し
+3. サービス層がSupabaseクライアント（`utils/supabase.ts`）を使用してデータベース操作を実行
+4. ユーザーIDは`utils/hashUserId.ts`でハッシュ化されてからデータベースに保存（プライバシー保護）
+
+### 認証フロー
+
+1. `AuthContext`がSupabaseの認証状態を監視
+2. 認証状態に応じて`App.tsx`でルーティングを切り替え
+3. 認証済みユーザーは`MainLayout`経由で`BudgetPage`にアクセス
+4. 未認証ユーザーは`AuthPage`にリダイレクト
+
+## 命名規則
+
+### ファイル名
+
+- **コンポーネント**: PascalCase（例: `BudgetCard.tsx`, `ExpenseForm.tsx`）
+- **フック**: camelCaseで`use`プレフィックス（例: `useBudgetData.ts`, `useExpenses.ts`）
+- **サービス**: camelCaseで`Service`サフィックス（例: `budgetService.ts`, `expenseService.ts`）
+- **ユーティリティ**: camelCase（例: `budgetCalculations.ts`, `errorHandler.ts`）
+- **型定義**: camelCase（例: `supabase.ts`）
+- **テストファイル**: 対象ファイルと同じ名前で`.test.ts`拡張子（例: `budgetService.test.ts`）
+
+### ディレクトリ名
+
+- すべて小文字（例: `components`, `services`, `utils`）
+- 複数形を使用（例: `components`, `pages`, `hooks`）
+
+## テスト構造
+
+- テストファイルは対象ファイルと同じディレクトリに配置
+- ファイル名は対象ファイル名に`.test.ts`を追加（例: `budgetService.test.ts`）
+- Vitest + Testing Libraryを使用
+- テスト設定は`src/test/setup.ts`に記述
+
+## 重要な設計原則
+
+### プライバシー保護
+
+- **ユーザーIDのハッシュ化**: すべてのデータベース操作で、ユーザーIDを`utils/hashUserId.ts`でハッシュ化してから保存
+- **Row Level Security (RLS)**: SupabaseのRLSポリシーにより、各ユーザーは自分のデータのみにアクセス可能
+
+### 型安全性
+
+- TypeScriptの型定義を活用
+- Supabaseの型定義は`src/types/supabase.ts`に自動生成される
+
+### エラーハンドリング
+
+- エラーハンドリングは`utils/errorHandler.ts`の`showError`関数を使用
+- ユーザーフレンドリーなエラーメッセージを表示
+
+### 状態管理
+
+- グローバル状態（認証状態）はReact Contextを使用
+- ローカル状態はReact Hooks（`useState`, `useEffect`）を使用
+- データ取得・更新ロジックはカスタムフックにカプセル化
+
+### コンポーネント設計
+
+- コンポーネントは単一責任の原則に従う
+- 再利用可能なコンポーネントは`components/ui/`に配置
+- 機能固有のコンポーネントは`components/budget/`などに配置
+
+## 環境変数
+
+以下の環境変数が必要です（`.env`ファイルに設定）：
+
+- `VITE_SUPABASE_URL`: SupabaseプロジェクトのURL
+- `VITE_SUPABASE_ANON_KEY`: Supabaseの匿名キー
+- `VITE_HASH_SALT`: ユーザーIDハッシュ化用のソルト値（セキュリティ上重要）
+
+## ビルドとデプロイ
+
+- 開発サーバー: `pnpm dev`
+- ビルド: `pnpm build`（`dist`ディレクトリに出力）
+- リント: `pnpm lint`
+- テスト: `pnpm test`
+- プレビュー: `pnpm preview`

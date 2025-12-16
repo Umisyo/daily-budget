@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { Button } from '../ui/button'
-import { calculateBudgetPeriod, formatBudgetPeriod, getPeriodListForSelector, formatPeriodShort } from '../../utils/budgetPeriod'
+import { calculateBudgetPeriod, formatBudgetPeriod, getPeriodListForSelector } from '../../utils/budgetPeriod'
 
 interface PeriodSelectorProps {
   startDay: number

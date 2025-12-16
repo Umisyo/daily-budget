@@ -1,6 +1,6 @@
 import { supabase } from '../utils/supabase'
 import { hashUserId } from '../utils/hashUserId'
-import { calculateBudgetPeriod } from '../utils/budgetPeriod'
+import { calculateBudgetPeriod, formatLocalDate } from '../utils/budgetPeriod'
 import { updateExpenseTags } from './tagService'
 import type { Tables } from '../types/supabase'
 
@@ -17,8 +17,8 @@ export async function getExpenses(
 ): Promise<Expense[]> {
   const now = referenceDate || new Date()
   const period = calculateBudgetPeriod(startDay, now)
-  const periodStartStr = period.start.toISOString().split('T')[0]
-  const periodEndStr = period.end.toISOString().split('T')[0]
+  const periodStartStr = formatLocalDate(period.start)
+  const periodEndStr = formatLocalDate(period.end)
 
   const { data: expensesData, error: expensesError } = await supabase
     .from('expenses')

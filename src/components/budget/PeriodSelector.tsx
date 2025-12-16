@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Button } from '../ui/button'
-import { calculateBudgetPeriod, formatBudgetPeriod } from '../../utils/budgetPeriod'
+import { calculateBudgetPeriod, formatBudgetPeriod, getPeriodListForSelector, formatPeriodShort } from '../../utils/budgetPeriod'
 
 interface PeriodSelectorProps {
   startDay: number
@@ -9,67 +9,62 @@ interface PeriodSelectorProps {
 }
 
 export function PeriodSelector({ startDay, selectedDate, onDateChange }: PeriodSelectorProps) {
-  const [year, setYear] = useState(selectedDate.getFullYear())
-  const [month, setMonth] = useState(selectedDate.getMonth() + 1)
+  // 期間リストを生成
+  const periodList = useMemo(() => getPeriodListForSelector(startDay, 12, 1), [startDay])
 
-  useEffect(() => {
-    setYear(selectedDate.getFullYear())
-    setMonth(selectedDate.getMonth() + 1)
-  }, [selectedDate])
+  // 選択された期間に対応するキーを計算
+  const selectedPeriod = useMemo(() => calculateBudgetPeriod(startDay, selectedDate), [startDay, selectedDate])
+  const getPeriodKey = (period: ReturnType<typeof calculateBudgetPeriod>): string => {
+    return `${period.startYear}-${period.startMonth}-${period.start.getDate()}-${period.endYear}-${period.endMonth}-${period.end.getDate()}`
+  }
+  const selectedPeriodKey = useMemo(() => getPeriodKey(selectedPeriod), [selectedPeriod])
 
-  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newYear = parseInt(e.target.value, 10)
-    setYear(newYear)
-    const newDate = new Date(newYear, month - 1, 15)
-    onDateChange(newDate)
+  // 選択された期間のインデックスを取得
+  const selectedIndex = useMemo(() => {
+    return periodList.findIndex((p) => p.periodKey === selectedPeriodKey)
+  }, [periodList, selectedPeriodKey])
+
+  const handlePeriodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const index = parseInt(e.target.value, 10)
+    if (index >= 0 && index < periodList.length) {
+      const selectedPeriodItem = periodList[index]
+      onDateChange(selectedPeriodItem.referenceDate)
+    }
   }
 
-  const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newMonth = parseInt(e.target.value, 10)
-    setMonth(newMonth)
-    const newDate = new Date(year, newMonth - 1, 15)
-    onDateChange(newDate)
+  const handlePrevPeriod = () => {
+    // 左のボタン（←）は過去（古い期間）に移動
+    // 期間リストは降順なので、インデックスを増やす
+    if (selectedIndex < periodList.length - 1) {
+      const prevPeriod = periodList[selectedIndex + 1]
+      onDateChange(prevPeriod.referenceDate)
+    }
   }
 
-  const handlePrevMonth = () => {
-    const newDate = new Date(year, month - 2, 15)
-    setYear(newDate.getFullYear())
-    setMonth(newDate.getMonth() + 1)
-    onDateChange(newDate)
+  const handleNextPeriod = () => {
+    // 右のボタン（→）は未来（新しい期間）に移動
+    // 期間リストは降順なので、インデックスを減らす
+    if (selectedIndex > 0) {
+      const nextPeriod = periodList[selectedIndex - 1]
+      onDateChange(nextPeriod.referenceDate)
+    }
   }
 
-  const handleNextMonth = () => {
-    const newDate = new Date(year, month, 15)
-    setYear(newDate.getFullYear())
-    setMonth(newDate.getMonth() + 1)
-    onDateChange(newDate)
-  }
-
-  const handleCurrentMonth = () => {
+  const handleCurrentPeriod = () => {
     const now = new Date()
-    setYear(now.getFullYear())
-    setMonth(now.getMonth() + 1)
     onDateChange(now)
   }
 
-  const isCurrentPeriod = (() => {
+  const isCurrentPeriod = useMemo(() => {
     const now = new Date()
     const currentPeriod = calculateBudgetPeriod(startDay, now)
-    const selectedPeriod = calculateBudgetPeriod(startDay, selectedDate)
-    // 選択された期間と現在の期間が同じかどうかを判定
-    // 開始年月と終了年月の両方が一致する場合、同じ期間とみなす
     return (
       currentPeriod.startYear === selectedPeriod.startYear &&
       currentPeriod.startMonth === selectedPeriod.startMonth &&
       currentPeriod.endYear === selectedPeriod.endYear &&
       currentPeriod.endMonth === selectedPeriod.endMonth
     )
-  })()
-
-  // 年と月の選択肢を生成（過去1年分 + 現在 + 未来1年分）
-  const currentYear = new Date().getFullYear()
-  const years = Array.from({ length: 3 }, (_, i) => currentYear - 1 + i)
-  const months = Array.from({ length: 12 }, (_, i) => i + 1)
+  }, [startDay, selectedPeriod])
 
   return (
     <div className="flex flex-col gap-4 p-2 sm:p-4 bg-muted rounded-lg min-w-0 overflow-hidden">
@@ -81,53 +76,42 @@ export function PeriodSelector({ startDay, selectedDate, onDateChange }: PeriodS
         <Button
           type="button"
           size="sm"
-          onClick={handlePrevMonth}
-          aria-label="前月"
+          onClick={handlePrevPeriod}
+          aria-label="前期間"
           className="flex-shrink-0"
+          disabled={selectedIndex >= periodList.length - 1}
         >
           ←
         </Button>
-        <div className="flex gap-1 sm:gap-2 flex-1 justify-center min-w-0 overflow-hidden">
-          <select
-            value={year}
-            onChange={handleYearChange}
-            className="h-9 rounded-md border border-input bg-background px-2 sm:px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex-1 sm:flex-initial min-w-0 max-w-[120px] sm:max-w-none"
-          >
-            {years.map((y) => (
-              <option key={y} value={y}>
-                {y}年
-              </option>
-            ))}
-          </select>
-          <select
-            value={month}
-            onChange={handleMonthChange}
-            className="h-9 rounded-md border border-input bg-background px-2 sm:px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex-1 sm:flex-initial min-w-0 max-w-[100px] sm:max-w-none"
-          >
-            {months.map((m) => (
-              <option key={m} value={m}>
-                {m}月
-              </option>
-            ))}
-          </select>
-        </div>
+        <select
+          value={selectedIndex >= 0 ? selectedIndex : ''}
+          onChange={handlePeriodChange}
+          className="h-9 rounded-md border border-input bg-background px-2 sm:px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex-1 min-w-0"
+        >
+          {periodList.map((periodItem, index) => (
+            <option key={periodItem.periodKey} value={index}>
+              {periodItem.label}
+            </option>
+          ))}
+        </select>
         <div className="flex gap-1 sm:gap-2 flex-shrink-0">
           <Button
             type="button"
             size="sm"
-            onClick={handleNextMonth}
-            aria-label="次月"
+            onClick={handleNextPeriod}
+            aria-label="次期間"
             className={isCurrentPeriod ? 'invisible' : ''}
+            disabled={selectedIndex <= 0}
           >
             →
           </Button>
           <Button
             type="button"
             size="sm"
-            onClick={handleCurrentMonth}
+            onClick={handleCurrentPeriod}
             className={`hidden sm:inline-flex ${isCurrentPeriod ? 'invisible' : ''}`}
           >
-            今月
+            今期間
           </Button>
         </div>
       </div>

@@ -37,6 +37,17 @@ export function calculateBudgetPeriod(startDay: number, referenceDate: Date = ne
 }
 
 /**
+ * ローカル時間で日付文字列を生成（YYYY-MM-DD形式）
+ * toISOString()はUTC時間を返すため、タイムゾーンの問題を避けるために使用
+ */
+export function formatLocalDate(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+/**
  * 予算期間の表示用文字列を生成
  */
 export function formatBudgetPeriod(startDay: number, referenceDate: Date = new Date()) {
@@ -108,6 +119,156 @@ export function getAvailablePeriods(startDay: number, monthsBack: number = 12) {
       })
     }
   }
+
+  return periods
+}
+
+/**
+ * 期間を短い形式でフォーマット（M/D-M/D形式）
+ * @param period 予算期間オブジェクト
+ * @returns フォーマットされた期間文字列（例: "11/16-12/15"）
+ */
+export function formatPeriodShort(period: ReturnType<typeof calculateBudgetPeriod>): string {
+  const startMonth = period.startMonth
+  const startDay = period.start.getDate()
+  const endMonth = period.endMonth
+  const endDay = period.end.getDate()
+  return `${startMonth}/${startDay}-${endMonth}/${endDay}`
+}
+
+/**
+ * 期間選択用の期間リストを生成
+ * @param startDay 予算期間の開始日（1-31）
+ * @param periodsBack 過去何期間分を取得するか（デフォルトは12）
+ * @param periodsForward 未来何期間分を取得するか（デフォルトは1）
+ * @returns 期間のリスト（期間情報、表示用文字列、基準日を含む）
+ */
+export function getPeriodListForSelector(
+  startDay: number,
+  periodsBack: number = 12,
+  periodsForward: number = 1
+): Array<{
+  period: ReturnType<typeof calculateBudgetPeriod>
+  label: string
+  referenceDate: Date
+  periodKey: string // 期間を一意に識別するキー
+}> {
+  const now = new Date()
+  const currentPeriod = calculateBudgetPeriod(startDay, now)
+  
+  const periods: Array<{
+    period: ReturnType<typeof calculateBudgetPeriod>
+    label: string
+    referenceDate: Date
+    periodKey: string
+  }> = []
+
+  // 期間を一意に識別するためのキーを生成
+  const getPeriodKey = (period: ReturnType<typeof calculateBudgetPeriod>): string => {
+    return `${period.startYear}-${period.startMonth}-${period.start.getDate()}-${period.endYear}-${period.endMonth}-${period.end.getDate()}`
+  }
+
+  // 既に追加された期間を追跡
+  const addedKeys = new Set<string>()
+
+  // 現在の期間を追加
+  const currentKey = getPeriodKey(currentPeriod)
+  addedKeys.add(currentKey)
+  periods.push({
+    period: currentPeriod,
+    label: formatPeriodShort(currentPeriod),
+    referenceDate: now,
+    periodKey: currentKey,
+  })
+
+  // 過去の期間を生成（現在の期間の開始日の前日を基準日として使用）
+  let currentStartDate = new Date(
+    currentPeriod.startYear,
+    currentPeriod.startMonth - 1,
+    currentPeriod.start.getDate()
+  )
+
+  for (let i = 1; i <= periodsBack; i++) {
+    // 現在の期間の開始日の前日を基準日として使用
+    const prevDay = new Date(currentStartDate)
+    prevDay.setDate(prevDay.getDate() - 1)
+    
+    // 前の期間を計算（開始日の前日を基準日として使用）
+    const period = calculateBudgetPeriod(startDay, prevDay)
+    const key = getPeriodKey(period)
+
+    if (!addedKeys.has(key)) {
+      addedKeys.add(key)
+      // 基準日として、期間の開始日を使用
+      const referenceDate = new Date(
+        period.startYear,
+        period.startMonth - 1,
+        period.start.getDate()
+      )
+      periods.push({
+        period,
+        label: formatPeriodShort(period),
+        referenceDate: referenceDate,
+        periodKey: key,
+      })
+      // 次の反復のために、現在の開始日を更新
+      currentStartDate = new Date(
+        period.startYear,
+        period.startMonth - 1,
+        period.start.getDate()
+      )
+    } else {
+      break // 重複が見つかったら終了
+    }
+  }
+
+  // 未来の期間を生成（現在の期間の終了日の翌日を基準日として使用）
+  let currentEndDate = new Date(
+    currentPeriod.endYear,
+    currentPeriod.endMonth - 1,
+    currentPeriod.end.getDate()
+  )
+
+  for (let i = 1; i <= periodsForward; i++) {
+    // 現在の期間の終了日の翌日を基準日として使用
+    const nextDay = new Date(currentEndDate)
+    nextDay.setDate(nextDay.getDate() + 1)
+    
+    // 次の期間を計算（終了日の翌日を基準日として使用）
+    const period = calculateBudgetPeriod(startDay, nextDay)
+    const key = getPeriodKey(period)
+
+    if (!addedKeys.has(key)) {
+      addedKeys.add(key)
+      // 基準日として、期間の開始日を使用
+      const referenceDate = new Date(
+        period.startYear,
+        period.startMonth - 1,
+        period.start.getDate()
+      )
+      periods.push({
+        period,
+        label: formatPeriodShort(period),
+        referenceDate: referenceDate,
+        periodKey: key,
+      })
+      // 次の反復のために、現在の終了日を更新
+      currentEndDate = new Date(
+        period.endYear,
+        period.endMonth - 1,
+        period.end.getDate()
+      )
+    } else {
+      break // 重複が見つかったら終了
+    }
+  }
+
+  // 期間を開始日の順にソート（新しい期間が上に来るように降順）
+  periods.sort((a, b) => {
+    const aTime = a.period.start.getTime()
+    const bTime = b.period.start.getTime()
+    return bTime - aTime
+  })
 
   return periods
 }

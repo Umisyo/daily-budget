@@ -1,12 +1,16 @@
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { BudgetPage } from './BudgetPage'
+import { ExpenseChartPage } from './ExpenseChartPage'
 import { Button } from '../components/ui/button'
 import { Footer } from '../components/ui/Footer'
 import githubMark from '../components/ui/icons/github-mark.svg'
 import { SignOutIcon } from '../components/ui/icons/akar-icons-sign-out'
+import { cn } from '../lib/utils'
 
 export function MainLayout() {
   const { signOut } = useAuth()
+  const location = useLocation()
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -33,7 +37,37 @@ export function MainLayout() {
             </Button>
           </div>
         </div>
-        <BudgetPage />
+        <nav className="mb-6 px-4 sm:px-0">
+          <div className="flex gap-2">
+            <Link
+              to="/"
+              className={cn(
+                "px-4 py-2 rounded-md text-sm font-medium transition-colors",
+                location.pathname === "/"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              )}
+            >
+              予算管理
+            </Link>
+            <Link
+              to="/chart"
+              className={cn(
+                "px-4 py-2 rounded-md text-sm font-medium transition-colors",
+                location.pathname === "/chart"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              )}
+            >
+              グラフ
+            </Link>
+          </div>
+        </nav>
+        {location.pathname === '/chart' ? (
+          <ExpenseChartPage />
+        ) : (
+          <BudgetPage />
+        )}
       </div>
       <Footer />
     </div>

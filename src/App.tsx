@@ -29,6 +29,7 @@ function AppContent() {
       ) : (
         <>
           <Route path="/" element={<MainLayout />} />
+          <Route path="/chart" element={<MainLayout />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </>
       )}

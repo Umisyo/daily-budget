@@ -135,11 +135,11 @@ export function ExpenseChartPage() {
                 <ChartTooltip
                   content={
                     <ChartTooltipContent
-                      formatter={(value) => {
+                      valueFormatter={(value) => {
                         if (typeof value === 'number') {
                           return `${value.toLocaleString()}円`
                         }
-                        return String(value)
+                        return `${String(value)}円`
                       }}
                     />
                   }
